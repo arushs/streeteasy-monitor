@@ -1,0 +1,42 @@
+import { useQuery } from "convex/react";
+import { ConvexClientProvider } from "./ConvexClientProvider";
+import { api } from "../convex/_generated/api";
+import KanbanBoard from "./components/KanbanBoard";
+import Onboarding from "./components/Onboarding";
+
+function AppContent() {
+  const userEmails = useQuery(api.userEmails.list);
+
+  if (userEmails === undefined) {
+    return (
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        fontSize: "1.2rem",
+        color: "#666"
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  // Show onboarding if no emails are configured
+  if (userEmails.length === 0) {
+    return <Onboarding />;
+  }
+
+  // Show kanban board if user has emails set up
+  return <KanbanBoard />;
+}
+
+function App() {
+  return (
+    <ConvexClientProvider>
+      <AppContent />
+    </ConvexClientProvider>
+  );
+}
+
+export default App;
