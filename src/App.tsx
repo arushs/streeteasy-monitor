@@ -127,7 +127,7 @@ function LoginForm() {
 
 function Dashboard() {
   const { signOut } = useAuthActions();
-  const user = useQuery(api.auth.currentUser);
+  const user = useQuery(api.user.currentUser);
 
   return (
     <div className="min-h-screen bg-gray-50">
