@@ -139,3 +139,97 @@ export const auditData = query({
     };
   },
 });
+
+/**
+ * Import listings from email forwarding system
+ * NO AUTH - called by system with API key validation
+ */
+export const importFromEmail = mutation({
+  args: {
+    forwarderEmail: v.string(),
+    apiKey: v.string(),
+    listings: v.array(v.object({
+      streetEasyUrl: v.string(),
+      price: v.number(),
+      address: v.optional(v.string()),
+      bedrooms: v.optional(v.number()),
+      neighborhood: v.optional(v.string()),
+      noFee: v.optional(v.boolean()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    // Validate API key
+    const expectedApiKey = process.env.IMPORT_API_KEY;
+    if (!expectedApiKey) {
+      throw new Error("Import API key not configured");
+    }
+    if (args.apiKey !== expectedApiKey) {
+      throw new Error("Invalid API key");
+    }
+
+    // Look up user by forwarder email
+    const userEmail = await ctx.db
+      .query("userEmails")
+      .withIndex("by_email", (q) => q.eq("email", args.forwarderEmail))
+      .first();
+
+    const userId = userEmail?.userId; // Will be undefined if no user found
+
+    const results = {
+      total: args.listings.length,
+      inserted: 0,
+      skipped: 0,
+      errors: [] as string[],
+      orphaned: userId ? false : true,
+    };
+
+    // Process each listing
+    for (const listing of args.listings) {
+      try {
+        // Validate StreetEasy URL
+        if (!STREETEASY_URL_PATTERN.test(listing.streetEasyUrl)) {
+          results.errors.push(`Invalid StreetEasy URL: ${listing.streetEasyUrl}`);
+          results.skipped++;
+          continue;
+        }
+
+        // Check for duplicate (same URL for same user, or same URL if no user)
+        const existingQuery = userId
+          ? ctx.db.query("listings")
+              .withIndex("by_user_url", (q) => q.eq("userId", userId).eq("streetEasyUrl", listing.streetEasyUrl))
+          : ctx.db.query("listings")
+              .filter((q) => q.and(
+                q.eq(q.field("streetEasyUrl"), listing.streetEasyUrl),
+                q.eq(q.field("userId"), undefined)
+              ));
+
+        const existing = await existingQuery.first();
+        if (existing) {
+          results.skipped++;
+          continue;
+        }
+
+        // Insert the listing
+        await ctx.db.insert("listings", {
+          streetEasyUrl: listing.streetEasyUrl,
+          price: listing.price,
+          source: "email",
+          status: "new",
+          foundAt: Date.now(),
+          address: listing.address,
+          bedrooms: listing.bedrooms,
+          neighborhood: listing.neighborhood,
+          noFee: listing.noFee,
+          userId, // Will be undefined if no user found (orphaned)
+        });
+
+        results.inserted++;
+      } catch (error) {
+        results.errors.push(`Error processing ${listing.streetEasyUrl}: ${error}`);
+        results.skipped++;
+      }
+    }
+
+    return results;
+  },
+});
