@@ -2,7 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // Valid status values
-const VALID_STATUSES = ["new", "viewed", "saved", "rejected", "applied"] as const;
+const VALID_STATUSES = ["new", "interested", "reached_out", "touring", "applied", "rejected"] as const;
 type ListingStatus = typeof VALID_STATUSES[number];
 
 // Valid source values

@@ -146,8 +146,7 @@ export const auditData = query({
  */
 export const importFromEmail = mutation({
   args: {
-    forwarderEmail: v.string(),
-    apiKey: v.string(),
+    forwarderEmail: v.optional(v.string()),
     listings: v.array(v.object({
       streetEasyUrl: v.string(),
       price: v.number(),
@@ -158,14 +157,7 @@ export const importFromEmail = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    // Validate API key
-    const expectedApiKey = process.env.IMPORT_API_KEY;
-    if (!expectedApiKey) {
-      throw new Error("Import API key not configured");
-    }
-    if (args.apiKey !== expectedApiKey) {
-      throw new Error("Invalid API key");
-    }
+    // No auth for now - just accept listings
 
     // Look up user by forwarder email
     const userEmail = await ctx.db
@@ -231,5 +223,15 @@ export const importFromEmail = mutation({
     }
 
     return results;
+  },
+});
+
+/**
+ * Get all listings (no auth for now)
+ */
+export const getAllListings = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("listings").order("desc").collect();
   },
 });
