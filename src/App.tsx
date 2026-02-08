@@ -1,186 +1,357 @@
-import { useState } from "react";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 
-function LoginForm() {
-  const { signIn } = useAuthActions();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+// Status column configuration
+const COLUMNS = [
+  { id: "new", label: "New", emoji: "📥", color: "bg-blue-50 border-blue-200", badge: "bg-blue-100 text-blue-800" },
+  { id: "interested", label: "Interested", emoji: "👀", color: "bg-purple-50 border-purple-200", badge: "bg-purple-100 text-purple-800" },
+  { id: "reached_out", label: "Reached Out", emoji: "📧", color: "bg-yellow-50 border-yellow-200", badge: "bg-yellow-100 text-yellow-800" },
+  { id: "touring", label: "Touring", emoji: "🚶", color: "bg-green-50 border-green-200", badge: "bg-green-100 text-green-800" },
+  { id: "applied", label: "Applied", emoji: "📝", color: "bg-indigo-50 border-indigo-200", badge: "bg-indigo-100 text-indigo-800" },
+  { id: "rejected", label: "Rejected", emoji: "❌", color: "bg-gray-50 border-gray-200", badge: "bg-gray-100 text-gray-600" },
+] as const;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await signIn("password", { 
-        email, 
-        password, 
-        flow: isSignUp ? "signUp" : "signIn" 
-      });
-    } catch (error) {
-      console.error("Auth error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+type StatusType = typeof COLUMNS[number]["id"];
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      await signIn("google");
-    } catch (error) {
-      console.error("Google sign in error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+interface Listing {
+  _id: Id<"listings">;
+  streetEasyUrl: string;
+  price: number;
+  status: string;
+  address?: string;
+  bedrooms?: number;
+  neighborhood?: string;
+  noFee?: boolean;
+  foundAt: number;
+}
+
+interface ListingCardProps {
+  listing: Listing;
+  onStatusChange: (id: Id<"listings">, newStatus: StatusType) => void;
+  isUpdating: boolean;
+}
+
+function ListingCard({ listing, onStatusChange, isUpdating }: ListingCardProps) {
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const currentColumn = COLUMNS.find(c => c.id === listing.status);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isSignUp ? "Create your account" : "Sign in to your account"}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            StreetEasy Monitor
-          </p>
+    <div className={`bg-white rounded-lg shadow-sm border p-3 mb-2 transition-all hover:shadow-md ${isUpdating ? 'opacity-50' : ''}`}>
+      {/* Address */}
+      <div className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+        {listing.address || "Address not available"}
+      </div>
+      
+      {/* Price & Beds */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg font-bold text-green-600">
+          ${listing.price.toLocaleString()}
+        </span>
+        {listing.bedrooms !== undefined && (
+          <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+            {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} BR`}
+          </span>
+        )}
+        {listing.noFee && (
+          <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
+            No Fee
+          </span>
+        )}
+      </div>
+      
+      {/* Neighborhood */}
+      {listing.neighborhood && (
+        <div className="text-xs text-gray-500 mb-2">
+          📍 {listing.neighborhood}
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                disabled={isLoading}
+      )}
+      
+      {/* Actions */}
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+        <a
+          href={listing.streetEasyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+        >
+          View on StreetEasy →
+        </a>
+        
+        {/* Status Change Button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowStatusMenu(!showStatusMenu)}
+            className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+            disabled={isUpdating}
+          >
+            Move ▾
+          </button>
+          
+          {showStatusMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setShowStatusMenu(false)}
               />
-            </div>
-            <div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {isLoading ? "..." : (isSignUp ? "Sign up" : "Sign in")}
-            </button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Sign in with Google
-            </button>
-          </div>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-indigo-600 hover:text-indigo-500"
-            >
-              {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
-            </button>
-          </div>
-        </form>
+              <div className="absolute right-0 bottom-full mb-1 bg-white rounded-lg shadow-lg border z-20 py-1 min-w-[140px]">
+                {COLUMNS.filter(col => col.id !== listing.status).map(col => (
+                  <button
+                    key={col.id}
+                    onClick={() => {
+                      onStatusChange(listing._id, col.id);
+                      setShowStatusMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <span>{col.emoji}</span>
+                    <span>{col.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function Dashboard() {
-  const { signOut } = useAuthActions();
-  const user = useQuery(api.user.currentUser);
+interface KanbanColumnProps {
+  column: typeof COLUMNS[number];
+  listings: Listing[];
+  onStatusChange: (id: Id<"listings">, newStatus: StatusType) => void;
+  updatingIds: Set<string>;
+}
+
+function KanbanColumn({ column, listings, onStatusChange, updatingIds }: KanbanColumnProps) {
+  return (
+    <div className={`flex-shrink-0 w-72 md:w-80 rounded-lg border ${column.color}`}>
+      {/* Column Header */}
+      <div className="p-3 border-b border-inherit">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+            <span>{column.emoji}</span>
+            <span>{column.label}</span>
+          </h3>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${column.badge}`}>
+            {listings.length}
+          </span>
+        </div>
+      </div>
+      
+      {/* Cards */}
+      <div className="p-2 overflow-y-auto max-h-[calc(100vh-220px)] min-h-[200px]">
+        {listings.length === 0 ? (
+          <div className="text-center text-gray-400 text-sm py-8">
+            No listings
+          </div>
+        ) : (
+          listings.map(listing => (
+            <ListingCard
+              key={listing._id}
+              listing={listing}
+              onStatusChange={onStatusChange}
+              isUpdating={updatingIds.has(listing._id)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+type SortOption = "price-asc" | "price-desc" | "date-desc" | "date-asc";
+
+function KanbanBoard() {
+  const listings = useQuery(api.admin.getAllListings);
+  const updateStatus = useMutation(api.listings.updateStatus);
+  
+  const [filterNeighborhood, setFilterNeighborhood] = useState<string>("");
+  const [filterMaxPrice, setFilterMaxPrice] = useState<string>("");
+  const [sortBy, setSortBy] = useState<SortOption>("date-desc");
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+
+  // Get unique neighborhoods for filter dropdown
+  const neighborhoods = useMemo(() => {
+    if (!listings) return [];
+    const hoods = new Set<string>();
+    listings.forEach(l => {
+      if (l.neighborhood) hoods.add(l.neighborhood);
+    });
+    return Array.from(hoods).sort();
+  }, [listings]);
+
+  // Filter and sort listings
+  const filteredListings = useMemo(() => {
+    if (!listings) return [];
+    
+    let filtered = [...listings];
+    
+    // Apply neighborhood filter
+    if (filterNeighborhood) {
+      filtered = filtered.filter(l => l.neighborhood === filterNeighborhood);
+    }
+    
+    // Apply max price filter
+    if (filterMaxPrice) {
+      const maxPrice = parseInt(filterMaxPrice);
+      if (!isNaN(maxPrice)) {
+        filtered = filtered.filter(l => l.price <= maxPrice);
+      }
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        case "date-asc":
+          return a.foundAt - b.foundAt;
+        case "date-desc":
+        default:
+          return b.foundAt - a.foundAt;
+      }
+    });
+    
+    return filtered;
+  }, [listings, filterNeighborhood, filterMaxPrice, sortBy]);
+
+  // Group listings by status
+  const listingsByStatus = useMemo(() => {
+    const grouped: Record<string, Listing[]> = {};
+    COLUMNS.forEach(col => {
+      grouped[col.id] = [];
+    });
+    
+    filteredListings.forEach(listing => {
+      // Map old statuses to new ones
+      let status = listing.status;
+      if (status === "viewed" || status === "saved") {
+        status = "interested"; // Map old statuses to interested
+      }
+      if (grouped[status]) {
+        grouped[status].push(listing);
+      } else {
+        grouped["new"].push(listing); // Default to new for unknown statuses
+      }
+    });
+    
+    return grouped;
+  }, [filteredListings]);
+
+  const handleStatusChange = async (id: Id<"listings">, newStatus: StatusType) => {
+    setUpdatingIds(prev => new Set(prev).add(id));
+    try {
+      await updateStatus({ id, status: newStatus });
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  if (listings === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">
-                StreetEasy Monitor
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">
-                Logged in as: {user?.email || user?.name || "User"}
-              </span>
-              <button
-                onClick={() => signOut()}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
+    <div className="h-full flex flex-col">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-4 p-4 bg-white rounded-lg shadow-sm">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Neighborhood:</label>
+          <select
+            value={filterNeighborhood}
+            onChange={(e) => setFilterNeighborhood(e.target.value)}
+            className="text-sm border rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="">All</option>
+            {neighborhoods.map(hood => (
+              <option key={hood} value={hood}>{hood}</option>
+            ))}
+          </select>
         </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Welcome to StreetEasy Monitor!
-              </h2>
-              <p className="text-gray-600">
-                Authentication is working. Your dashboard will be built here.
-              </p>
-            </div>
-          </div>
+        
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Max Price:</label>
+          <input
+            type="number"
+            placeholder="e.g. 4000"
+            value={filterMaxPrice}
+            onChange={(e) => setFilterMaxPrice(e.target.value)}
+            className="text-sm border rounded-md px-2 py-1.5 w-24 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
         </div>
-      </main>
+        
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Sort:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="text-sm border rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+        
+        <div className="flex-1"></div>
+        
+        <div className="text-sm text-gray-500">
+          {filteredListings.length} of {listings.length} listings
+        </div>
+      </div>
+      
+      {/* Kanban Columns */}
+      <div className="flex-1 overflow-x-auto pb-4">
+        <div className="flex gap-4 min-w-max px-1">
+          {COLUMNS.map(column => (
+            <KanbanColumn
+              key={column.id}
+              column={column}
+              listings={listingsByStatus[column.id] || []}
+              onStatusChange={handleStatusChange}
+              updatingIds={updatingIds}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function App() {
   return (
-    <div className="App">
-      <Authenticated>
-        <Dashboard />
-      </Authenticated>
-      <Unauthenticated>
-        <LoginForm />
-      </Unauthenticated>
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-14">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold text-gray-900">
+                🏠 StreetEasy Monitor
+              </h1>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="p-4 h-[calc(100vh-56px)]">
+        <KanbanBoard />
+      </main>
     </div>
   );
 }

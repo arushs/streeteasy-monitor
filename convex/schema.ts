@@ -9,7 +9,7 @@ export default defineSchema({
     streetEasyUrl: v.string(),
     price: v.number(),
     source: v.string(), // "manual" | "email" | "test"
-    status: v.string(), // "new" | "viewed" | "saved" | "rejected" | "applied"
+    status: v.string(), // "new" | "interested" | "reached_out" | "touring" | "applied" | "rejected"
     foundAt: v.number(),
     address: v.optional(v.string()),
     bedrooms: v.optional(v.number()),
