@@ -103,12 +103,64 @@ prisma/
 ## Development Phases
 
 - [x] **Phase 1:** Foundation (Next.js, Clerk, Prisma, Dashboard layout)
-- [ ] **Phase 2:** Email Ingestion
+- [x] **Phase 2:** Email Ingestion (webhook, parser, deduplication)
 - [ ] **Phase 3:** Dashboard & Listings
 - [ ] **Phase 4:** Contact System
 - [ ] **Phase 5:** Auto-Contact
 - [ ] **Phase 6:** Response Tracking
 - [ ] **Phase 7:** Polish & Launch
+
+## API Endpoints
+
+### Webhooks
+
+#### `POST /api/webhooks/inbound-email`
+Receives forwarded StreetEasy alert emails from Mailgun, SendGrid, or Postmark.
+
+**Request formats supported:**
+- `application/json`
+- `application/x-www-form-urlencoded`
+
+**Response:**
+```json
+{
+  "status": "processed",
+  "success": true,
+  "emailId": "clxxx...",
+  "user": "user@example.com",
+  "listings": {
+    "extracted": 5,
+    "saved": 3,
+    "duplicates": 2
+  },
+  "errors": []
+}
+```
+
+### Debug Endpoints (Development Only)
+
+#### `POST /api/debug/parse-email`
+Test the email parser without storing anything.
+
+#### `GET /api/debug/email-stats`
+Get email processing statistics.
+
+## Email Provider Setup
+
+### Mailgun
+
+1. Create an inbound route pointing to your webhook URL
+2. Set `MAILGUN_SIGNING_KEY` for signature verification
+
+### SendGrid
+
+1. Configure Inbound Parse to POST to `/api/webhooks/inbound-email`
+2. Optionally set up basic auth via `SENDGRID_WEBHOOK_AUTH`
+
+### Postmark
+
+1. Configure inbound webhook to POST to `/api/webhooks/inbound-email`
+2. Optionally set `POSTMARK_WEBHOOK_TOKEN` for verification
 
 ## License
 
