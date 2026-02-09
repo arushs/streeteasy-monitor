@@ -49,21 +49,22 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
     }
   }, [undo]);
 
-  // Empty state
+  // Empty state - full screen
   if (visibleCards.length === 0) {
     return (
-      <div className="flex h-[500px] flex-col items-center justify-center rounded-3xl bg-gray-50 p-8">
-        <div className="mb-4 text-6xl">🎉</div>
-        <h3 className="mb-2 text-xl font-bold text-gray-800">All caught up!</h3>
-        <p className="mb-6 text-center text-gray-500">
-          You've reviewed all the listings. Check back later for more!
+      <div className="flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-gray-900 to-gray-800 p-8" style={{ height: "calc(90vh - 80px)" }}>
+        <div className="mb-6 text-8xl">🎉</div>
+        <h3 className="mb-3 text-2xl font-bold text-white">All caught up!</h3>
+        <p className="mb-8 text-center text-lg text-gray-400">
+          You've reviewed all the listings.
+          <br />Check back later for more!
         </p>
         {canUndo && (
           <button
             onClick={handleUndo}
-            className="flex items-center gap-2 rounded-xl bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+            className="flex items-center gap-3 rounded-2xl bg-white/10 px-8 py-4 font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
           >
-            <span>↩️</span>
+            <span className="text-xl">↩️</span>
             Undo last swipe
           </button>
         )}
@@ -72,29 +73,29 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
   }
 
   return (
-    <div className="relative">
-      {/* Progress indicator */}
-      <div className="mb-4 flex items-center justify-between px-2">
-        <span className="text-sm font-medium text-gray-500">
-          {remainingCount} listing{remainingCount !== 1 ? "s" : ""} left
+    <div className="relative flex flex-col" style={{ height: "calc(100vh - 60px)" }}>
+      {/* Progress indicator - minimal, top */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-sm font-semibold text-gray-600">
+          {remainingCount} left
         </span>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-gray-200">
             <div
-              className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
               style={{
                 width: `${((currentIndex) / listings.length) * 100}%`,
               }}
             />
           </div>
-          <span className="text-xs text-gray-400">
-            {currentIndex}/{listings.length}
+          <span className="text-xs font-medium text-gray-400">
+            {currentIndex + 1}/{listings.length}
           </span>
         </div>
       </div>
 
-      {/* Card Stack */}
-      <div className="relative h-[520px] w-full">
+      {/* Card Stack - Full viewport */}
+      <div className="relative flex-1 px-3">
         <AnimatePresence mode="popLayout">
           {visibleCards.map((listing, index) => (
             <SwipeCard
@@ -109,55 +110,57 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
         </AnimatePresence>
       </div>
 
-      {/* Action Buttons (for accessibility / button users) */}
-      <div className="mt-6 flex justify-center gap-4">
-        <button
-          onClick={() => handleSwipe("left")}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-2xl transition-all hover:scale-110 hover:bg-red-200 active:scale-95"
-          title="Skip"
-        >
-          ✕
-        </button>
-        <button
-          onClick={() => handleSwipe("up")}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl transition-all hover:scale-110 hover:bg-blue-200 active:scale-95"
-          title="Save"
-        >
-          ⭐
-        </button>
-        <button
-          onClick={() => handleSwipe("right")}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-2xl transition-all hover:scale-110 hover:bg-emerald-200 active:scale-95"
-          title="Contact"
-        >
-          💬
-        </button>
-      </div>
-
-      {/* Undo Button */}
-      <AnimatePresence>
-        {canUndo && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="mt-4 flex justify-center"
+      {/* Action Buttons - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent pb-6 pt-8">
+        <div className="flex justify-center gap-5">
+          <button
+            onClick={() => handleSwipe("left")}
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-lg ring-1 ring-gray-100 transition-all hover:scale-110 hover:bg-red-50 hover:ring-red-200 active:scale-95"
+            title="Skip"
           >
-            <button
-              onClick={handleUndo}
-              className="flex items-center gap-2 rounded-xl bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200"
+            ✕
+          </button>
+          <button
+            onClick={() => handleSwipe("up")}
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-4xl text-white shadow-xl transition-all hover:scale-110 hover:shadow-blue-300/50 active:scale-95"
+            title="Contact"
+          >
+            📧
+          </button>
+          <button
+            onClick={() => handleSwipe("right")}
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-lg ring-1 ring-gray-100 transition-all hover:scale-110 hover:bg-emerald-50 hover:ring-emerald-200 active:scale-95"
+            title="Save"
+          >
+            💚
+          </button>
+        </div>
+        
+        {/* Undo Button */}
+        <AnimatePresence>
+          {canUndo && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mt-4 flex justify-center"
             >
-              <span>↩️</span>
-              Undo{" "}
-              {lastAction?.direction === "left"
-                ? "(skipped)"
-                : lastAction?.direction === "right"
-                ? "(contact)"
-                : "(saved)"}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <button
+                onClick={handleUndo}
+                className="flex items-center gap-2 rounded-full bg-gray-100 px-5 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200 active:scale-95"
+              >
+                <span>↩️</span>
+                Undo{" "}
+                {lastAction?.direction === "left"
+                  ? "(skipped)"
+                  : lastAction?.direction === "right"
+                  ? "(liked)"
+                  : "(contacted)"}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

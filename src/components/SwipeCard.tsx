@@ -50,7 +50,7 @@ export function SwipeCard({
   const y = useMotionValue(0);
   
   // Rotation based on x position (cards tilt as you drag)
-  const rotate = useTransform(x, [-200, 200], [-15, 15]);
+  const rotate = useTransform(x, [-200, 200], [-12, 12]);
   
   // Opacity for overlay indicators
   const skipOpacity = useTransform(x, [-150, -50, 0], [1, 0.5, 0]);
@@ -58,8 +58,8 @@ export function SwipeCard({
   const contactOpacity = useTransform(y, [0, -50, -100], [0, 0.5, 1]);
   
   // Scale for background cards
-  const scale = isTop ? 1 : 0.95 - stackIndex * 0.03;
-  const yOffset = isTop ? 0 : stackIndex * 8;
+  const scale = isTop ? 1 : 0.95 - stackIndex * 0.02;
+  const yOffset = isTop ? 0 : stackIndex * 12;
   
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const { offset, velocity } = info;
@@ -92,29 +92,33 @@ export function SwipeCard({
     y.set(0);
   };
   
-  // Exit animation variants
+  // Exit animation variants with spring physics
   const exitVariants = {
-    left: { x: -400, opacity: 0, transition: { duration: 0.3 } },
-    right: { x: 400, opacity: 0, transition: { duration: 0.3 } },
-    up: { y: -400, opacity: 0, transition: { duration: 0.3 } },
+    left: { x: -500, rotate: -20, opacity: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+    right: { x: 500, rotate: 20, opacity: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+    up: { y: -500, opacity: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
   };
 
   // Placeholder image gradient based on neighborhood
   const gradientColors: Record<string, string> = {
-    "East Village": "from-orange-400 to-rose-500",
-    "West Village": "from-emerald-400 to-teal-500",
-    "Chelsea": "from-purple-400 to-pink-500",
-    "Williamsburg": "from-blue-400 to-indigo-500",
-    "Brooklyn Heights": "from-cyan-400 to-blue-500",
-    "SoHo": "from-amber-400 to-orange-500",
-    "default": "from-slate-400 to-slate-600",
+    "East Village": "from-orange-500 via-rose-500 to-pink-600",
+    "West Village": "from-emerald-500 via-teal-500 to-cyan-600",
+    "Chelsea": "from-purple-500 via-pink-500 to-rose-600",
+    "Williamsburg": "from-blue-500 via-indigo-500 to-purple-600",
+    "Brooklyn Heights": "from-cyan-500 via-blue-500 to-indigo-600",
+    "SoHo": "from-amber-500 via-orange-500 to-red-600",
+    "Lower East Side": "from-rose-500 via-pink-500 to-purple-600",
+    "Tribeca": "from-slate-500 via-gray-500 to-zinc-600",
+    "Upper West Side": "from-green-500 via-emerald-500 to-teal-600",
+    "Upper East Side": "from-blue-500 via-sky-500 to-cyan-600",
+    "default": "from-slate-600 via-gray-600 to-zinc-700",
   };
   
   const gradient = gradientColors[listing.neighborhood || ""] || gradientColors.default;
 
   return (
     <motion.div
-      className="absolute w-full touch-none"
+      className="absolute inset-x-0 top-0 touch-none"
       style={{
         x: isTop ? x : 0,
         y: isTop ? y : yOffset,
@@ -124,16 +128,20 @@ export function SwipeCard({
       }}
       drag={isTop}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-      dragElastic={1}
+      dragElastic={0.9}
       onDragEnd={handleDragEnd}
       animate={exitDirection ? exitVariants[exitDirection] : undefined}
-      initial={{ opacity: 0, scale: 0.8, y: 50 }}
+      initial={{ opacity: 0, scale: 0.9, y: 30 }}
       whileInView={{ opacity: 1, scale: isTop ? 1 : scale, y: isTop ? 0 : yOffset }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
     >
-      <div className="relative overflow-hidden rounded-3xl bg-white shadow-xl">
-        {/* Image / Placeholder */}
-        <div className={`relative h-64 bg-gradient-to-br ${gradient}`}>
+      {/* Full-screen card container */}
+      <div 
+        className="relative overflow-hidden rounded-3xl bg-black"
+        style={{ height: "calc(90vh - 80px)" }} // Full viewport minus header/footer space
+      >
+        {/* Image / Placeholder - Takes 100% of card */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`}>
           {listing.imageUrl ? (
             <img 
               src={listing.imageUrl} 
@@ -143,99 +151,102 @@ export function SwipeCard({
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <span className="text-6xl opacity-50">🏠</span>
+              <span className="text-8xl opacity-30">🏠</span>
             </div>
           )}
-          
-          {/* Swipe Indicators (overlays) */}
-          {isTop && (
-            <>
-              {/* Skip (left) */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center bg-red-500/80"
-                style={{ opacity: skipOpacity }}
-              >
-                <div className="rounded-xl border-4 border-white px-6 py-3">
-                  <span className="text-3xl font-bold text-white">SKIP</span>
-                </div>
-              </motion.div>
-              
-              {/* Save (right) */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center bg-emerald-500/80"
-                style={{ opacity: saveOpacity }}
-              >
-                <div className="rounded-xl border-4 border-white px-6 py-3">
-                  <span className="text-3xl font-bold text-white">SAVE</span>
-                </div>
-              </motion.div>
-              
-              {/* Contact (up) */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center bg-blue-500/80"
-                style={{ opacity: contactOpacity }}
-              >
-                <div className="rounded-xl border-4 border-white px-6 py-3">
-                  <span className="text-3xl font-bold text-white">CONTACT</span>
-                </div>
-              </motion.div>
-            </>
-          )}
+        </div>
+        
+        {/* Dark gradient overlay for text readability - bottom portion */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        
+        {/* Swipe Indicators (overlays) */}
+        {isTop && (
+          <>
+            {/* Skip (left) */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center bg-red-500/70"
+              style={{ opacity: skipOpacity }}
+            >
+              <div className="rounded-2xl border-[6px] border-white px-8 py-4 -rotate-12">
+                <span className="text-5xl font-black text-white tracking-wider">NOPE</span>
+              </div>
+            </motion.div>
+            
+            {/* Save (right) */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center bg-emerald-500/70"
+              style={{ opacity: saveOpacity }}
+            >
+              <div className="rounded-2xl border-[6px] border-white px-8 py-4 rotate-12">
+                <span className="text-5xl font-black text-white tracking-wider">LIKE</span>
+              </div>
+            </motion.div>
+            
+            {/* Contact (up) */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center bg-blue-500/70"
+              style={{ opacity: contactOpacity }}
+            >
+              <div className="rounded-2xl border-[6px] border-white px-8 py-4">
+                <span className="text-5xl font-black text-white tracking-wider">CONTACT</span>
+              </div>
+            </motion.div>
+          </>
+        )}
+        
+        {/* Top Badges */}
+        <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-5">
+          {/* Time Badge */}
+          <div className="rounded-full bg-black/40 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
+            {timeAgo(listing.foundAt)}
+          </div>
           
           {/* No Fee Badge */}
           {listing.noFee && (
-            <div className="absolute right-4 top-4 rounded-full bg-emerald-500 px-3 py-1 text-sm font-bold text-white shadow-lg">
-              No Fee
+            <div className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-bold text-white shadow-lg">
+              NO FEE 🎉
             </div>
           )}
-          
-          {/* Time Badge */}
-          <div className="absolute left-4 top-4 rounded-full bg-black/50 px-3 py-1 text-sm font-medium text-white backdrop-blur-sm">
-            {timeAgo(listing.foundAt)}
-          </div>
         </div>
         
-        {/* Content */}
-        <div className="p-5">
-          {/* Price */}
-          <div className="mb-2 flex items-baseline gap-1">
-            <span className="text-3xl font-bold text-gray-900">
+        {/* Bottom Content - Overlaid on image */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 pb-8">
+          {/* Price - Large and prominent */}
+          <div className="mb-1 flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-white drop-shadow-lg">
               ${listing.price.toLocaleString()}
             </span>
-            <span className="text-gray-400">/mo</span>
+            <span className="text-xl text-white/70">/mo</span>
           </div>
           
           {/* Address */}
-          <h2 className="mb-3 text-lg font-semibold text-gray-800">
+          <h2 className="mb-3 text-xl font-semibold text-white drop-shadow-md">
             {cleanAddress(listing.address)}
           </h2>
           
-          {/* Details Row */}
+          {/* Details Row - Pills */}
           <div className="mb-4 flex flex-wrap gap-2">
             {listing.bedrooms !== undefined && (
-              <span className="rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600">
+              <span className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">
                 {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} BR`}
               </span>
             )}
             {listing.bathrooms !== undefined && (
-              <span className="rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600">
+              <span className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">
                 {listing.bathrooms} BA
               </span>
             )}
             {listing.sqft && (
-              <span className="rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600">
+              <span className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">
                 {listing.sqft.toLocaleString()} sqft
               </span>
             )}
+            {listing.neighborhood && (
+              <span className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">
+                📍 {listing.neighborhood}
+              </span>
+            )}
           </div>
-          
-          {/* Neighborhood */}
-          {listing.neighborhood && (
-            <div className="flex items-center gap-1 text-gray-500">
-              <span>📍</span>
-              <span className="font-medium">{listing.neighborhood}</span>
-            </div>
-          )}
           
           {/* View Details Button */}
           {onViewDetails && (
@@ -244,18 +255,18 @@ export function SwipeCard({
                 e.stopPropagation();
                 onViewDetails();
               }}
-              className="mt-4 w-full rounded-xl bg-gray-100 py-3 text-center font-semibold text-indigo-600 transition-colors hover:bg-gray-200"
+              className="w-full rounded-2xl bg-white/20 py-3.5 text-center font-semibold text-white backdrop-blur-md transition-all hover:bg-white/30 active:scale-[0.98]"
             >
-              View Details →
+              View on StreetEasy →
             </button>
           )}
         </div>
         
-        {/* Swipe Hints (bottom) */}
-        <div className="flex justify-center gap-8 border-t border-gray-100 py-4 text-sm text-gray-400">
-          <span>← Skip</span>
-          <span>↑ Contact</span>
-          <span>Save →</span>
+        {/* Swipe Hints - subtle at bottom */}
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-8 text-xs font-medium text-white/40">
+          <span>← NOPE</span>
+          <span>↑ CONTACT</span>
+          <span>LIKE →</span>
         </div>
       </div>
     </motion.div>

@@ -94,58 +94,64 @@ export function SwipeFeed() {
 
   if (!listings) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600" />
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-14 w-14 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600" />
+          <span className="text-sm font-medium text-gray-500">Finding apartments...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🏠</span>
-            <h1 className="text-lg font-bold text-gray-900">StreetEasy</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Translucent Header - Overlaid on content */}
+      <header className="fixed left-0 right-0 top-0 z-50">
+        <div className="bg-white/70 backdrop-blur-xl border-b border-gray-200/50">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🏠</span>
+              <h1 className="text-lg font-bold text-gray-900">StreetYeet</h1>
+            </div>
+            
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                hasActiveFilters
+                  ? "bg-indigo-500 text-white shadow-lg shadow-indigo-200"
+                  : "bg-gray-100/80 text-gray-700 hover:bg-gray-200/80"
+              }`}
+            >
+              <span>⚙️</span>
+              Filters
+              {hasActiveFilters && (
+                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-indigo-600">
+                  {[
+                    filters.neighborhoods.length > 0,
+                    filters.maxPrice !== null,
+                    filters.minBeds !== null,
+                    filters.noFeeOnly,
+                  ].filter(Boolean).length}
+                </span>
+              )}
+            </button>
           </div>
-          
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              hasActiveFilters
-                ? "bg-indigo-100 text-indigo-700"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            <span>⚙️</span>
-            Filters
-            {hasActiveFilters && (
-              <span className="ml-1 rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">
-                {[
-                  filters.neighborhoods.length > 0,
-                  filters.maxPrice !== null,
-                  filters.minBeds !== null,
-                  filters.noFeeOnly,
-                ].filter(Boolean).length}
-              </span>
-            )}
-          </button>
         </div>
         
-        {/* Filter Panel */}
+        {/* Filter Panel - Slide down */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t border-gray-100 bg-white"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="overflow-hidden bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
             >
-              <div className="mx-auto max-w-lg space-y-4 p-4">
+              <div className="space-y-5 p-5">
                 {/* Neighborhoods */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Neighborhoods
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -160,22 +166,25 @@ export function SwipeFeed() {
                               : [...prev.neighborhoods, hood],
                           }));
                         }}
-                        className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                        className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                           filters.neighborhoods.includes(hood)
-                            ? "bg-indigo-600 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            ? "bg-indigo-600 text-white shadow-md"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
                         {hood}
                       </button>
                     ))}
+                    {neighborhoods.length === 0 && (
+                      <span className="text-sm text-gray-400">No neighborhoods yet</span>
+                    )}
                   </div>
                 </div>
                 
                 {/* Price & Beds Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                       Max Price
                     </label>
                     <select
@@ -186,21 +195,23 @@ export function SwipeFeed() {
                           maxPrice: e.target.value ? parseInt(e.target.value) : null,
                         }))
                       }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     >
-                      <option value="">Any</option>
+                      <option value="">Any price</option>
                       <option value="2000">$2,000</option>
                       <option value="2500">$2,500</option>
                       <option value="3000">$3,000</option>
                       <option value="3500">$3,500</option>
                       <option value="4000">$4,000</option>
                       <option value="5000">$5,000</option>
+                      <option value="6000">$6,000</option>
+                      <option value="8000">$8,000</option>
                     </select>
                   </div>
                   
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Min Bedrooms
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      Bedrooms
                     </label>
                     <select
                       value={filters.minBeds ?? ""}
@@ -210,7 +221,7 @@ export function SwipeFeed() {
                           minBeds: e.target.value ? parseInt(e.target.value) : null,
                         }))
                       }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     >
                       <option value="">Any</option>
                       <option value="0">Studio+</option>
@@ -222,23 +233,27 @@ export function SwipeFeed() {
                 </div>
                 
                 {/* No Fee Toggle */}
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={filters.noFeeOnly}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, noFeeOnly: e.target.checked }))
-                    }
-                    className="h-5 w-5 rounded border-gray-300 text-indigo-600"
-                  />
-                  <span className="text-sm font-medium text-gray-700">No Fee Only</span>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={filters.noFeeOnly}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, noFeeOnly: e.target.checked }))
+                      }
+                      className="peer sr-only"
+                    />
+                    <div className="h-7 w-12 rounded-full bg-gray-200 peer-checked:bg-emerald-500 transition-colors" />
+                    <div className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-md transition-transform peer-checked:translate-x-5" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">No Fee Only</span>
                 </label>
                 
                 {/* Clear Filters */}
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="w-full rounded-lg bg-gray-100 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200"
+                    className="w-full rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-200"
                   >
                     Clear All Filters
                   </button>
@@ -249,8 +264,8 @@ export function SwipeFeed() {
         </AnimatePresence>
       </header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-lg px-4 py-6">
+      {/* Main Content - Full width, starts below header */}
+      <main className="pt-14">
         <CardStack
           listings={filteredListings as Listing[]}
           onSwipe={handleSwipe}
@@ -265,18 +280,19 @@ export function SwipeFeed() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
             onClick={() => setContactModal(null)}
           >
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="w-full max-w-lg rounded-t-3xl bg-white p-6 sm:rounded-3xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 text-center">
-                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500">
                   <span className="text-3xl">📧</span>
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">Contact Landlord</h2>
@@ -285,11 +301,11 @@ export function SwipeFeed() {
                 </p>
               </div>
               
-              <div className="mb-6 rounded-xl bg-gray-50 p-4">
-                <p className="font-semibold text-gray-900">
+              <div className="mb-6 rounded-2xl bg-gray-50 p-5">
+                <p className="text-2xl font-bold text-gray-900">
                   ${contactModal.price.toLocaleString()}/mo
                 </p>
-                <p className="text-gray-600">{contactModal.address}</p>
+                <p className="text-lg font-medium text-gray-700">{contactModal.address}</p>
                 <p className="text-sm text-gray-400">
                   {contactModal.bedrooms === 0 ? "Studio" : `${contactModal.bedrooms} BR`}
                   {contactModal.neighborhood && ` • ${contactModal.neighborhood}`}
@@ -299,7 +315,7 @@ export function SwipeFeed() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setContactModal(null)}
-                  className="flex-1 rounded-xl bg-gray-100 py-3 font-semibold text-gray-600 transition-colors hover:bg-gray-200"
+                  className="flex-1 rounded-2xl bg-gray-100 py-4 font-semibold text-gray-600 transition-colors hover:bg-gray-200"
                 >
                   Cancel
                 </button>
@@ -307,10 +323,10 @@ export function SwipeFeed() {
                   href={contactModal.streetEasyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 rounded-xl bg-indigo-600 py-3 text-center font-semibold text-white transition-colors hover:bg-indigo-700"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 py-4 text-center font-semibold text-white transition-all hover:shadow-lg hover:shadow-indigo-300/50"
                   onClick={() => setContactModal(null)}
                 >
-                  Open on StreetEasy
+                  Open StreetEasy
                 </a>
               </div>
             </motion.div>
