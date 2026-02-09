@@ -18,6 +18,7 @@ export default defineSchema({
     neighborhood: v.optional(v.string()),
     noFee: v.optional(v.boolean()),
     emailMessageId: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
     // userId is optional for backward compatibility with existing data
     // New listings will always have userId set
     // Listings without userId are considered "orphaned" and won't appear in user queries
