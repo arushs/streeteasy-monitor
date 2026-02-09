@@ -63,14 +63,14 @@ export function SwipeFeed() {
     async (listing: Listing, direction: SwipeDirection) => {
       const statusMap: Record<SwipeDirection, string> = {
         left: "rejected",
-        right: "reached_out", // Will trigger contact flow
-        up: "interested", // Saved
+        right: "interested", // Saved
+        up: "reached_out", // Will trigger contact flow
       };
       
       const newStatus = statusMap[direction];
       
-      // If swiped right (contact), show contact modal
-      if (direction === "right") {
+      // If swiped up (contact), show contact modal
+      if (direction === "up") {
         setContactModal(listing);
       }
       

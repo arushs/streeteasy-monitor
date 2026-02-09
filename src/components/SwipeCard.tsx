@@ -54,8 +54,8 @@ export function SwipeCard({
   
   // Opacity for overlay indicators
   const skipOpacity = useTransform(x, [-150, -50, 0], [1, 0.5, 0]);
-  const contactOpacity = useTransform(x, [0, 50, 150], [0, 0.5, 1]);
-  const saveOpacity = useTransform(y, [0, -50, -100], [0, 0.5, 1]);
+  const saveOpacity = useTransform(x, [0, 50, 150], [0, 0.5, 1]);
+  const contactOpacity = useTransform(y, [0, -50, -100], [0, 0.5, 1]);
   
   // Scale for background cards
   const scale = isTop ? 1 : 0.95 - stackIndex * 0.03;
@@ -160,23 +160,23 @@ export function SwipeCard({
                 </div>
               </motion.div>
               
-              {/* Contact (right) */}
+              {/* Save (right) */}
               <motion.div
                 className="absolute inset-0 flex items-center justify-center bg-emerald-500/80"
-                style={{ opacity: contactOpacity }}
-              >
-                <div className="rounded-xl border-4 border-white px-6 py-3">
-                  <span className="text-3xl font-bold text-white">CONTACT</span>
-                </div>
-              </motion.div>
-              
-              {/* Save (up) */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center bg-blue-500/80"
                 style={{ opacity: saveOpacity }}
               >
                 <div className="rounded-xl border-4 border-white px-6 py-3">
                   <span className="text-3xl font-bold text-white">SAVE</span>
+                </div>
+              </motion.div>
+              
+              {/* Contact (up) */}
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center bg-blue-500/80"
+                style={{ opacity: contactOpacity }}
+              >
+                <div className="rounded-xl border-4 border-white px-6 py-3">
+                  <span className="text-3xl font-bold text-white">CONTACT</span>
                 </div>
               </motion.div>
             </>
@@ -254,8 +254,8 @@ export function SwipeCard({
         {/* Swipe Hints (bottom) */}
         <div className="flex justify-center gap-8 border-t border-gray-100 py-4 text-sm text-gray-400">
           <span>← Skip</span>
-          <span>↑ Save</span>
-          <span>Contact →</span>
+          <span>↑ Contact</span>
+          <span>Save →</span>
         </div>
       </div>
     </motion.div>
