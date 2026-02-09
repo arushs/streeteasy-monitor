@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@source "../src";
 
 * {
   margin: 0;
@@ -46,6 +45,11 @@ body {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* Bottom nav safe area padding */
+.nav-safe-bottom {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Glassmorphism utility */

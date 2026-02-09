@@ -49,12 +49,12 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
     }
   }, [undo]);
 
-  // Empty state - full screen Tinder style
+  // Empty state - full screen Tinder style (with room for nav bar)
   if (visibleCards.length === 0) {
     return (
       <div 
         className="flex flex-col items-center justify-center bg-gray-50 p-6"
-        style={{ height: "calc(100vh - 60px)" }}
+        style={{ height: "calc(100vh - 60px - 4.5rem - env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="text-center">
           <div className="text-6xl mb-4">🎉</div>
@@ -76,16 +76,16 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
 
   return (
     <div 
-      className="fixed inset-0 z-[100] bg-gray-100 overflow-hidden swipe-container"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)", top: "60px" }}
+      className="fixed inset-0 z-[50] bg-gray-100 overflow-hidden swipe-container"
+      style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))", top: "60px" }}
     >
       {/* Counter badge - top right */}
       <div className="absolute top-4 right-4 z-50 rounded-full bg-black/50 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
         {remainingCount} left
       </div>
 
-      {/* Card stack area */}
-      <div className="absolute inset-4 bottom-32">
+      {/* Card stack area - leave room for action buttons and nav bar */}
+      <div className="absolute inset-4" style={{ bottom: "calc(10rem + env(safe-area-inset-bottom, 0px))" }}>
         <AnimatePresence mode="popLayout">
           {visibleCards.map((listing, index) => (
             <SwipeCard
@@ -100,8 +100,8 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
         </AnimatePresence>
       </div>
 
-      {/* Bottom action buttons - Tinder style circular buttons */}
-      <div className="absolute bottom-8 inset-x-0 flex items-center justify-center gap-6 px-4">
+      {/* Bottom action buttons - Tinder style circular buttons (above nav bar) */}
+      <div className="absolute inset-x-0 flex items-center justify-center gap-6 px-4" style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
         {/* Undo button - small */}
         <motion.button
           onClick={handleUndo}
@@ -170,14 +170,15 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
         </motion.button>
       </div>
 
-      {/* Undo toast notification */}
+      {/* Undo toast notification - above action buttons */}
       <AnimatePresence>
         {canUndo && lastAction && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-28 left-1/2 -translate-x-1/2 z-50"
+            className="absolute left-1/2 -translate-x-1/2 z-50"
+            style={{ bottom: "calc(10rem + env(safe-area-inset-bottom, 0px))" }}
           >
             <button
               onClick={handleUndo}
