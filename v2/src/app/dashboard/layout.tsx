@@ -65,9 +65,9 @@ export default function DashboardLayout({
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50">
         <div className="flex justify-around py-2">
+          <MobileNavItem href="/dashboard/swipe" icon="🔥" label="Swipe" />
           <MobileNavItem href="/dashboard" icon="📊" label="Feed" />
           <MobileNavItem href="/dashboard/queue" icon="✉️" label="Queue" />
-          <MobileNavItem href="/dashboard/sent" icon="📨" label="Sent" />
           <MobileNavItem href="/dashboard/saved" icon="💾" label="Saved" />
           <MobileNavItem href="/dashboard/settings" icon="⚙️" label="Settings" />
         </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
+  { href: "/dashboard/swipe", icon: "🔥", label: "Swipe", badge: "5" },
   { href: "/dashboard", icon: "📊", label: "Feed", badge: null },
   { href: "/dashboard/queue", icon: "✉️", label: "Contact Queue", badge: "2" },
   { href: "/dashboard/sent", icon: "📨", label: "Sent", badge: null },

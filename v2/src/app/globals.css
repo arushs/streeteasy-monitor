@@ -25,3 +25,28 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Swipe card custom styles */
+.swipe-card {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Disable overscroll on swipe page */
+.swipe-container {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Smooth font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safe area support */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
