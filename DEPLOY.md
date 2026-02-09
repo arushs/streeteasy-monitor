@@ -6,8 +6,22 @@ Simple Vite + React app with Convex backend.
 
 | Component | Platform | URL |
 |-----------|----------|-----|
-| Frontend | Cloudflare Pages | https://streeteasy-monitor.pages.dev |
+| Frontend | Cloudflare Pages | https://streetyeet.com |
+| Staging | Cloudflare Pages | https://streeteasy-monitor.pages.dev |
 | Backend | Convex | (configured in convex.json) |
+
+## Custom Domain: streetyeet.com
+
+**Status:** ✅ Configured (2026-02-09)
+
+The domain is set up on Cloudflare:
+- Zone: streetyeet.com (active)
+- Pages Project: streeteasy-monitor
+- Custom Domains:
+  - streetyeet.com → streeteasy-monitor.pages.dev
+  - www.streetyeet.com → streeteasy-monitor.pages.dev
+  
+SSL is automatically provisioned by Cloudflare.
 
 ### Deploy V1
 

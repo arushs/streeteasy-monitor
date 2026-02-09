@@ -2,6 +2,10 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
+import SwipeFeed from "./pages/SwipeFeed";
+
+// View type for toggle
+type ViewMode = "swipe" | "kanban";
 
 // Status column configuration
 const COLUMNS = [
@@ -35,7 +39,6 @@ interface ListingCardProps {
 
 function ListingCard({ listing, onStatusChange, isUpdating }: ListingCardProps) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const currentColumn = COLUMNS.find(c => c.id === listing.status);
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border p-3 mb-2 transition-all hover:shadow-md ${isUpdating ? 'opacity-50' : ''}`}>
@@ -334,7 +337,62 @@ function KanbanBoard() {
   );
 }
 
+// View Toggle Component
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  return (
+    <div className="flex bg-gray-100 rounded-lg p-1">
+      <button
+        onClick={() => onChange("swipe")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+          view === "swipe"
+            ? "bg-white text-indigo-600 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <span>👆</span>
+        <span className="hidden sm:inline">Swipe</span>
+      </button>
+      <button
+        onClick={() => onChange("kanban")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+          view === "kanban"
+            ? "bg-white text-indigo-600 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <span>📋</span>
+        <span className="hidden sm:inline">Board</span>
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
+  // Default to swipe view, persist preference
+  const [view, setView] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem("se-view-mode");
+    return (saved === "kanban" || saved === "swipe") ? saved : "swipe";
+  });
+
+  const handleViewChange = (newView: ViewMode) => {
+    setView(newView);
+    localStorage.setItem("se-view-mode", newView);
+  };
+
+  // SwipeFeed has its own header, so we render it full-screen
+  if (view === "swipe") {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        {/* Floating toggle button for swipe view */}
+        <div className="fixed top-3 right-3 z-50">
+          <ViewToggle view={view} onChange={handleViewChange} />
+        </div>
+        <SwipeFeed />
+      </div>
+    );
+  }
+
+  // Kanban view with shared header
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm">
@@ -344,6 +402,9 @@ export default function App() {
               <h1 className="text-xl font-semibold text-gray-900">
                 🏠 StreetEasy Monitor
               </h1>
+            </div>
+            <div className="flex items-center">
+              <ViewToggle view={view} onChange={handleViewChange} />
             </div>
           </div>
         </div>
