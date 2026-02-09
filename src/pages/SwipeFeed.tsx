@@ -64,14 +64,14 @@ export function SwipeFeed() {
       const statusMap: Record<SwipeDirection, string> = {
         left: "rejected",
         right: "interested", // Saved
-        up: "reached_out", // Will trigger contact flow
+        up: "reached_out", // Opens StreetEasy to contact
       };
       
       const newStatus = statusMap[direction];
       
-      // If swiped up (contact), show contact modal
+      // If swiped up (contact), open StreetEasy listing
       if (direction === "up") {
-        setContactModal(listing);
+        window.open(listing.streetEasyUrl, "_blank", "noopener,noreferrer");
       }
       
       // Update status in database
