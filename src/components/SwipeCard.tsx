@@ -131,7 +131,7 @@ export function SwipeCard({
 
   return (
     <motion.div
-      className="absolute inset-0 touch-none swipe-card"
+      className="absolute left-0 right-0 top-0 bottom-0 touch-none swipe-card"
       style={{ 
         x: isTop ? x : 0, 
         y: isTop ? y : yOffset, 

@@ -76,8 +76,8 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
 
   return (
     <div 
-      className="fixed inset-0 z-[50] bg-gray-100 overflow-hidden swipe-container"
-      style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))", top: "60px" }}
+      className="fixed left-0 right-0 bottom-0 z-[50] bg-gray-100 overflow-hidden swipe-container"
+      style={{ top: "60px", paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
     >
       {/* Counter badge - top right */}
       <div className="absolute top-4 right-4 z-50 rounded-full bg-black/50 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
@@ -85,7 +85,7 @@ export function CardStack({ listings, onSwipe, onViewDetails }: CardStackProps) 
       </div>
 
       {/* Card stack area - leave room for action buttons and nav bar */}
-      <div className="absolute inset-4" style={{ bottom: "calc(10rem + env(safe-area-inset-bottom, 0px))" }}>
+      <div className="absolute left-4 right-4 top-4" style={{ bottom: "calc(10rem + env(safe-area-inset-bottom, 0px))" }}>
         <AnimatePresence mode="popLayout">
           {visibleCards.map((listing, index) => (
             <SwipeCard
