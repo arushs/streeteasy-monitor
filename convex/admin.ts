@@ -235,3 +235,37 @@ export const getAllListings = query({
     return await ctx.db.query("listings").order("desc").collect();
   },
 });
+
+/**
+ * Admin: Create a user email mapping (for email ingestion)
+ * NO AUTH - admin use only via API
+ */
+export const createUserEmail = mutation({
+  args: {
+    email: v.string(),
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Check if email already exists
+    const existing = await ctx.db
+      .query("userEmails")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existing) {
+      return { success: false, error: "Email already exists", existing };
+    }
+
+    // Generate a userId if not provided
+    const userId = args.userId || `user_${Date.now()}`;
+
+    const id = await ctx.db.insert("userEmails", {
+      userId,
+      email: args.email,
+      verified: true, // Admin-created, so verified
+      createdAt: Date.now(),
+    });
+
+    return { success: true, id, userId, email: args.email };
+  },
+});
