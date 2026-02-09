@@ -5,9 +5,9 @@ import "./KanbanBoard.css";
 const COLUMNS = [
   { id: 'new', title: 'New', emoji: '🆕' },
   { id: 'interested', title: 'Interested', emoji: '👀' },
-  { id: 'toured', title: 'Toured', emoji: '🚶' },
+  { id: 'touring', title: 'Touring', emoji: '🚶' },
   { id: 'applied', title: 'Applied', emoji: '📝' },
-  { id: 'passed', title: 'Passed', emoji: '❌' },
+  { id: 'rejected', title: 'Passed', emoji: '❌' },
 ];
 
 interface Listing {
@@ -27,7 +27,7 @@ export default function KanbanBoard() {
 
   const handleStatusUpdate = async (listingId: string, newStatus: string) => {
     try {
-      await updateStatus({ listingId, status: newStatus });
+      await updateStatus({ id: listingId as any, status: newStatus });
     } catch (error) {
       console.error("Failed to update listing status:", error);
     }
