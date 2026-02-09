@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import type { Listing, SwipeDirection } from "../types/listing";
 import { swipeHaptic } from "../utils/haptics";
@@ -85,6 +86,8 @@ export function SwipeCard({
   isTop = false,
   stackIndex = 0,
 }: SwipeCardProps) {
+  const exitDirectionRef = useRef<"left" | "right" | "up">("left");
+  const [, forceUpdate] = useState(0);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -105,20 +108,26 @@ export function SwipeCard({
 
     // Swipe up (contact) - priority gesture
     if (offset.y < -SWIPE_UP_THRESHOLD || (velocity.y < -VELOCITY_THRESHOLD && offset.y < -30)) {
+      exitDirectionRef.current = "up";
+      forceUpdate(n => n + 1);
       swipeHaptic("up");
-      onSwipe("up");
+      requestAnimationFrame(() => onSwipe("up"));
       return;
     }
     // Swipe left (skip)
     if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) {
+      exitDirectionRef.current = "left";
+      forceUpdate(n => n + 1);
       swipeHaptic("left");
-      onSwipe("left");
+      requestAnimationFrame(() => onSwipe("left"));
       return;
     }
     // Swipe right (save)
     if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
+      exitDirectionRef.current = "right";
+      forceUpdate(n => n + 1);
       swipeHaptic("right");
-      onSwipe("right");
+      requestAnimationFrame(() => onSwipe("right"));
       return;
     }
     
@@ -145,7 +154,7 @@ export function SwipeCard({
       onDragEnd={handleDragEnd}
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: isTop ? 1 : scale, opacity: 1 }}
-      exit={exitVariants.left}
+      exit={exitVariants[exitDirectionRef.current]}
       transition={{ type: "spring", stiffness: 200, damping: 22, mass: 0.8 }}
     >
       <div

@@ -269,3 +269,50 @@ export const createUserEmail = mutation({
     return { success: true, id, userId, email: args.email };
   },
 });
+
+/**
+ * Clear all listings from the database
+ * NO AUTH - admin use only
+ */
+export const clearAllListings = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allListings = await ctx.db.query("listings").collect();
+    let deleted = 0;
+    
+    for (const listing of allListings) {
+      await ctx.db.delete(listing._id);
+      deleted++;
+    }
+    
+    return { deleted };
+  },
+});
+
+// Valid status values for updateListingStatus
+const VALID_STATUSES = ["new", "interested", "reached_out", "touring", "applied", "rejected"] as const;
+
+/**
+ * Update listing status
+ * NO AUTH - for swipe feed functionality
+ */
+export const updateListingStatus = mutation({
+  args: {
+    id: v.id("listings"),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Validate status
+    if (!VALID_STATUSES.includes(args.status as typeof VALID_STATUSES[number])) {
+      throw new Error(`status must be one of: ${VALID_STATUSES.join(", ")}`);
+    }
+    
+    const listing = await ctx.db.get(args.id);
+    if (!listing) {
+      throw new Error("Listing not found");
+    }
+    
+    await ctx.db.patch(args.id, { status: args.status });
+    return { success: true };
+  },
+});

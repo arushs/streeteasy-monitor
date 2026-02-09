@@ -38,7 +38,7 @@ function FilterChip({ label, active = false, onClick }: { label: string; active?
 
 export function SwipeFeed() {
   const listings = useQuery(api.admin.getAllListings);
-  const updateStatus = useMutation(api.listings.updateStatus);
+  const updateStatus = useMutation(api.admin.updateListingStatus);
   
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
