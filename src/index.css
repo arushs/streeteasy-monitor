@@ -1,9 +1,10 @@
 @import "tailwindcss";
 @source "../src";
 
-* {
-  margin: 0;
-  padding: 0;
+/* Reset handled by Tailwind preflight - only add box-sizing */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 

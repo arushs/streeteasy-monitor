@@ -81,7 +81,7 @@ export function SavesPage() {
           </p>
         </div>
       ) : (
-        <div className="px-4 pt-4 space-y-3">
+        <div className="px-4 sm:px-6 pt-4 pb-4 space-y-4 max-w-lg mx-auto">
           <AnimatePresence mode="popLayout">
             {savedListings.map((listing) => (
               <motion.div
@@ -92,58 +92,61 @@ export function SavesPage() {
                 exit={{ opacity: 0, x: -100, scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 className={`
-                  bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden
+                  bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden
                   ${removingId === listing._id ? "opacity-50" : ""}
                 `}
               >
                 {/* Card Content */}
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-base truncate">
+                <div className="p-4 sm:p-5">
+                  {/* Header: Address & Price */}
+                  <div className="flex flex-col gap-1 mb-3">
+                    <div className="flex justify-between items-start gap-3">
+                      <h3 className="font-semibold text-gray-900 text-[15px] sm:text-base leading-tight line-clamp-2">
                         {listing.address || "Address not available"}
                       </h3>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-base sm:text-lg font-bold text-gray-900 whitespace-nowrap">
+                          ${listing.price.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
                       <p className="text-sm text-gray-500">
                         {listing.neighborhood || "NYC"}
-                      </p>
-                    </div>
-                    <div className="text-right ml-3 flex-shrink-0">
-                      <p className="text-lg font-bold text-gray-900">
-                        ${listing.price.toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-400">/month</p>
                     </div>
                   </div>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                       {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} BR`}
                     </span>
                     {listing.noFee && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                         No Fee
                       </span>
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
+                  {/* Actions - larger tap targets for mobile */}
+                  <div className="flex gap-3">
                     <button
                       onClick={() => handleRemove(listing._id)}
                       disabled={removingId === listing._id}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-medium text-sm hover:bg-gray-200 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl bg-gray-100 text-gray-700 font-medium text-sm active:bg-gray-200 transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                       Remove
                     </button>
                     <button
                       onClick={() => handleContact(listing)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium text-sm shadow-sm hover:shadow-md transition-all"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium text-sm shadow-sm active:opacity-90 transition-all"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                       View

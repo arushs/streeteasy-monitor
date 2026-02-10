@@ -154,6 +154,7 @@ export const importFromEmail = mutation({
       bedrooms: v.optional(v.number()),
       neighborhood: v.optional(v.string()),
       noFee: v.optional(v.boolean()),
+      imageUrl: v.optional(v.string()),
     })),
   },
   handler: async (ctx, args) => {
@@ -212,6 +213,7 @@ export const importFromEmail = mutation({
           bedrooms: listing.bedrooms,
           neighborhood: listing.neighborhood,
           noFee: listing.noFee,
+          imageUrl: listing.imageUrl,
           userId, // Will be undefined if no user found (orphaned)
         });
 
