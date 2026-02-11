@@ -20,7 +20,8 @@ interface Listing {
 export function SavesPage() {
   const listings = useQuery(api.admin.getAllListings);
   const updateStatus = useMutation(api.listings.updateStatus);
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<Id<"listings"> | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Filter to only show "interested" (saved) listings
   const savedListings = useMemo(() => {
@@ -32,8 +33,12 @@ export function SavesPage() {
 
   const handleRemove = async (id: Id<"listings">) => {
     setRemovingId(id);
+    setError(null);
     try {
       await updateStatus({ id, status: "rejected" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove listing");
+      console.error("Remove failed:", err);
     } finally {
       setRemovingId(null);
     }
@@ -68,6 +73,21 @@ export function SavesPage() {
           </span>
         </div>
       </header>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="fixed top-16 left-0 right-0 z-40 bg-red-50 border-b border-red-200 px-4 py-3">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {savedListings.length === 0 ? (
