@@ -9,6 +9,7 @@ type FilterState = {
   neighborhoods: string[];
   maxPrice: number | null;
   minBeds: number | null;
+  minBaths: number | null;
   noFeeOnly: boolean;
 };
 
@@ -16,6 +17,7 @@ const DEFAULT_FILTERS: FilterState = {
   neighborhoods: [],
   maxPrice: null,
   minBeds: null,
+  minBaths: null,
   noFeeOnly: false,
 };
 
@@ -68,6 +70,9 @@ export function SwipeFeed() {
       if (filters.minBeds !== null && (listing.bedrooms ?? 0) < filters.minBeds) {
         return false;
       }
+      if (filters.minBaths !== null && (listing.bathrooms ?? 0) < filters.minBaths) {
+        return false;
+      }
       if (filters.noFeeOnly && !listing.noFee) {
         return false;
       }
@@ -107,6 +112,7 @@ export function SwipeFeed() {
     filters.neighborhoods.length > 0 ||
     filters.maxPrice !== null ||
     filters.minBeds !== null ||
+    filters.minBaths !== null ||
     filters.noFeeOnly;
 
   if (!listings) {
@@ -149,6 +155,7 @@ export function SwipeFeed() {
                     filters.neighborhoods.length > 0,
                     filters.maxPrice !== null,
                     filters.minBeds !== null,
+                    filters.minBaths !== null,
                     filters.noFeeOnly,
                   ].filter(Boolean).length}
                 </span>
@@ -206,8 +213,8 @@ export function SwipeFeed() {
                   </div>
                 </div>
                 
-                {/* Price & Beds Row */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Price, Beds & Baths Row */}
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-gray-700">
                       Max Price
@@ -230,6 +237,8 @@ export function SwipeFeed() {
                       <option value="4000">$4,000</option>
                       <option value="5000">$5,000</option>
                       <option value="6000">$6,000</option>
+                      <option value="7000">$7,000</option>
+                      <option value="7500">$7,500</option>
                       <option value="8000">$8,000</option>
                     </select>
                   </div>
@@ -253,6 +262,26 @@ export function SwipeFeed() {
                       <option value="1">1 BR+</option>
                       <option value="2">2 BR+</option>
                       <option value="3">3 BR+</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      Bathrooms
+                    </label>
+                    <select
+                      value={filters.minBaths ?? ""}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          minBaths: e.target.value ? parseInt(e.target.value) : null,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    >
+                      <option value="">Any</option>
+                      <option value="1">1 BA+</option>
+                      <option value="2">2 BA+</option>
                     </select>
                   </div>
                 </div>

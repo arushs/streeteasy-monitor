@@ -11,11 +11,21 @@ interface Listing {
   status: string;
   address?: string;
   bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
   neighborhood?: string;
   noFee?: boolean;
   foundAt: number;
   imageUrl?: string;
 }
+
+const neighborhoodGradients: Record<string, string> = {
+  "East Village": "from-orange-400 via-pink-500 to-purple-600",
+  "West Village": "from-emerald-400 via-teal-500 to-cyan-600",
+  "Chelsea": "from-blue-400 via-indigo-500 to-purple-600",
+  "Williamsburg": "from-yellow-400 via-orange-500 to-red-500",
+  "default": "from-indigo-400 via-purple-500 to-pink-600",
+};
 
 export function SavesPage() {
   const listings = useQuery(api.admin.getAllListings);
@@ -42,10 +52,6 @@ export function SavesPage() {
     } finally {
       setRemovingId(null);
     }
-  };
-
-  const handleContact = (listing: Listing) => {
-    window.open(listing.streetEasyUrl, "_blank", "noopener,noreferrer");
   };
 
   if (!listings) {
@@ -116,6 +122,21 @@ export function SavesPage() {
                   ${removingId === listing._id ? "opacity-50" : ""}
                 `}
               >
+                {/* Listing Image */}
+                <div className="h-40 w-full overflow-hidden">
+                  {listing.imageUrl ? (
+                    <img
+                      src={listing.imageUrl}
+                      alt={listing.address || "Listing"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className={`h-full w-full bg-gradient-to-br ${neighborhoodGradients[listing.neighborhood || ""] || neighborhoodGradients.default} flex items-center justify-center`}>
+                      <span className="text-5xl opacity-30">🏠</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Card Content */}
                 <div className="p-4 sm:p-5">
                   {/* Header: Address & Price */}
@@ -143,6 +164,16 @@ export function SavesPage() {
                     <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                       {listing.bedrooms === 0 ? "Studio" : `${listing.bedrooms} BR`}
                     </span>
+                    {listing.bathrooms && (
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {listing.bathrooms} BA
+                      </span>
+                    )}
+                    {listing.sqft && (
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        {listing.sqft.toLocaleString()} sqft
+                      </span>
+                    )}
                     {listing.noFee && (
                       <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                         No Fee
@@ -162,15 +193,17 @@ export function SavesPage() {
                       </svg>
                       Remove
                     </button>
-                    <button
-                      onClick={() => handleContact(listing)}
+                    <a
+                      href={listing.streetEasyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[48px] rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium text-sm shadow-sm active:opacity-90 transition-all"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
-                      View
-                    </button>
+                      View on StreetEasy
+                    </a>
                   </div>
                 </div>
               </motion.div>
