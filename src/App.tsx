@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
 
-function LoginForm() {
-  const { signIn } = useAuthActions();
+// TODO: Replace Convex auth with D1/Workers-based auth
+// Previously used: @convex-dev/auth, convex/react (useQuery, useMutation, Authenticated, Unauthenticated)
+
+function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,11 +13,9 @@ function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signIn("password", { 
-        email, 
-        password, 
-        flow: isSignUp ? "signUp" : "signIn" 
-      });
+      // TODO: Implement auth via D1/Workers API
+      console.warn("Auth not yet implemented — Convex removed");
+      onLogin();
     } catch (error) {
       console.error("Auth error:", error);
     } finally {
@@ -29,7 +26,9 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signIn("google");
+      // TODO: Implement Google OAuth via Workers
+      console.warn("Google sign-in not yet implemented — Convex removed");
+      onLogin();
     } catch (error) {
       console.error("Google sign in error:", error);
     } finally {
@@ -125,9 +124,9 @@ function LoginForm() {
   );
 }
 
-function Dashboard() {
-  const { signOut } = useAuthActions();
-  const user = useQuery(api.auth.currentUser);
+function Dashboard({ onLogout }: { onLogout: () => void }) {
+  // TODO: Fetch user info from D1/Workers API
+  // Previously used: useQuery(api.auth.currentUser)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,10 +140,11 @@ function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">
-                Logged in as: {user?.email || user?.name || "User"}
+                {/* TODO: Show user email from D1/Workers auth */}
+                Logged in
               </span>
               <button
-                onClick={() => signOut()}
+                onClick={onLogout}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 Sign out
@@ -173,14 +173,17 @@ function Dashboard() {
 }
 
 export default function App() {
+  // TODO: Replace with real auth state from D1/Workers
+  // Previously used Convex's <Authenticated>/<Unauthenticated> components
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   return (
     <div className="App">
-      <Authenticated>
-        <Dashboard />
-      </Authenticated>
-      <Unauthenticated>
-        <LoginForm />
-      </Unauthenticated>
+      {isAuthenticated ? (
+        <Dashboard onLogout={() => setIsAuthenticated(false)} />
+      ) : (
+        <LoginForm onLogin={() => setIsAuthenticated(true)} />
+      )}
     </div>
   );
 }
