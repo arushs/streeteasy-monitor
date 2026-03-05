@@ -1,79 +1,53 @@
-# StreetEasy Monitor - Convex Backend
+# StreetEasy Monitor
 
-Backend functions for the StreetEasy Monitor app.
+A Tinder-like swipe UI for browsing StreetEasy rental listings. Built with React + Vite.
+
+## Features
+
+- **Swipe Interface** — Full-screen card-based browsing (swipe right to save, left to skip)
+- **Kanban Board** — Organize listings by status (new, viewed, saved, rejected, applied)
+- **Email Ingestion** — Auto-import listings from StreetEasy email alerts
+- **Mobile-First** — Designed for mobile with gesture support
+
+## Tech Stack
+
+- **Frontend:** React, TypeScript, Tailwind CSS, Framer Motion
+- **Build:** Vite
+- **Hosting:** Cloudflare Pages
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+App runs at http://localhost:5173
 
 ## Deployment
 
-- **Project**: quixotic-ram-346
-- **URL**: https://quixotic-ram-346.convex.cloud
-
-## Security Features
-
-### Authentication
-All queries and mutations require authentication via `ctx.auth.getUserIdentity()`. Unauthenticated requests receive a clear error message.
-
-### User Scoping
-- All listings have a `userId` field
-- Queries only return listings belonging to the authenticated user
-- Mutations validate that the user owns the listing before modifying/deleting
-
-### Input Validation
-- `streetEasyUrl`: Must match `https://streeteasy.com/*` pattern, no script injection
-- `price`: Must be a positive number (max $1,000,000/month)
-- `status`: Must be one of: "new", "viewed", "saved", "rejected", "applied"
-- `source`: Must be one of: "manual", "email", "test"
-- String fields are sanitized to remove HTML tags
+See [DEPLOY.md](./DEPLOY.md) for full deployment instructions.
 
 ## API Reference
 
-### Queries
+### Listings
 
-#### `listings:list`
-Get all listings for the authenticated user.
-- Args: `{ status?: string }` - Optional filter by status
-- Returns: Array of listings
+| Endpoint | Description |
+|----------|-------------|
+| `listings:list` | Get all listings (optional status filter) |
+| `listings:get` | Get a single listing by ID |
+| `listings:stats` | Get listing statistics |
+| `listings:create` | Create a new listing |
+| `listings:updateStatus` | Update listing status |
+| `listings:update` | Update listing details |
+| `listings:remove` | Delete a listing |
 
-#### `listings:get`
-Get a single listing by ID.
-- Args: `{ id: Id<"listings"> }`
-- Returns: Listing object
+### Security
 
-#### `listings:stats`
-Get listing statistics for the authenticated user.
-- Args: none
-- Returns: `{ total, byStatus, bySource }`
-
-### Mutations
-
-#### `listings:create`
-Create a new listing.
-- Args: `{ streetEasyUrl, price, source?, status?, address?, bedrooms?, neighborhood?, noFee?, emailMessageId? }`
-- Returns: New listing ID
-
-#### `listings:updateStatus`
-Update listing status.
-- Args: `{ id, status }`
-- Returns: `{ success: true }`
-
-#### `listings:update`
-Update listing details.
-- Args: `{ id, streetEasyUrl?, price?, status?, address?, bedrooms?, neighborhood?, noFee? }`
-- Returns: `{ success: true }`
-
-#### `listings:remove`
-Delete a listing.
-- Args: `{ id }`
-- Returns: `{ success: true, deletedId }`
-
-### Admin Functions
-
-#### `admin:auditData`
-Audit existing data for issues (XSS, invalid URLs, orphaned listings).
-- Requires authentication
-- Returns audit report
-
-#### `admin:sanitizeExistingData` (internal)
-Remove problematic data. Run from Convex dashboard.
+- All queries/mutations require authentication
+- User-scoped data (listings belong to users)
+- Input validation and HTML sanitization
+- URL validation for StreetEasy links
 
 ## Schema
 
@@ -81,18 +55,14 @@ Remove problematic data. Run from Convex dashboard.
 listings: {
   streetEasyUrl: string,
   price: number,
-  source: string,
-  status: string,
+  source: string,       // "manual" | "email" | "test"
+  status: string,       // "new" | "viewed" | "saved" | "rejected" | "applied"
   foundAt: number,
   address?: string,
   bedrooms?: number,
   neighborhood?: string,
   noFee?: boolean,
   emailMessageId?: string,
-  userId?: string, // Optional for backward compatibility
+  userId?: string,
 }
 ```
-
-## Backward Compatibility
-
-Existing listings without `userId` are preserved but "orphaned" - they won't appear in user queries. New listings always have `userId` set.

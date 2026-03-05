@@ -2,12 +2,12 @@
 
 ## Overview
 
-StreetEasy Monitor can automatically ingest listings from StreetEasy email alerts. This document explains how to set up inbound email processing.
+StreetEasy Monitor can automatically ingest listings from StreetEasy email alerts.
 
 ## Architecture
 
 ```
-User → Forwards StreetEasy emails → Email Provider → Webhook → Convex → Database
+User → Forwards StreetEasy emails → Email Provider → Webhook → Backend API → Database
 ```
 
 ## Email Provider Options
@@ -17,7 +17,7 @@ User → Forwards StreetEasy emails → Email Provider → Webhook → Convex �
 1. **Set up a receiving domain** (e.g., `inbound.yourapp.com`)
 2. **Configure MX records** to point to SendGrid
 3. **Set up Inbound Parse webhook**:
-   - URL: `https://your-convex-deployment.convex.site/inbound-email`
+   - URL: `https://your-api-endpoint/inbound-email`
    - Check "POST the raw, full MIME message"
 
 ### Option 2: Mailgun Routes
@@ -26,13 +26,13 @@ User → Forwards StreetEasy emails → Email Provider → Webhook → Convex �
 2. **Create a route**:
    ```
    Match: catch_all()
-   Action: forward("https://your-convex-deployment.convex.site/inbound-email")
+   Action: forward("https://your-api-endpoint/inbound-email")
    ```
 
 ### Option 3: Postmark Inbound
 
 1. **Set up inbound domain** in Postmark
-2. **Configure webhook URL**: `https://your-convex-deployment.convex.site/inbound-email`
+2. **Configure webhook URL**: `https://your-api-endpoint/inbound-email`
 
 ## User Flow
 
@@ -40,12 +40,10 @@ User → Forwards StreetEasy emails → Email Provider → Webhook → Convex �
 
 Users forward emails to: `{userId}+se@inbound.yourapp.com`
 
-The system extracts the userId from the email address.
-
 ### Method 2: Linked Email (More Flexible)
 
 1. User registers their personal email in the app
-2. User sets up email forwarding from their email provider
+2. User sets up email forwarding
 3. System looks up the sender email to find the user
 
 ## StreetEasy Alert Setup (User Instructions)
@@ -104,13 +102,13 @@ The system:
 ### Health Check
 
 ```bash
-curl https://your-deployment.convex.site/health
+curl https://your-api-endpoint/health
 ```
 
 ### Test Webhook
 
 ```bash
-curl -X POST https://your-deployment.convex.site/inbound-email \
+curl -X POST https://your-api-endpoint/inbound-email \
   -H "Content-Type: application/json" \
   -d '{
     "to": "testuser+se@inbound.yourapp.com",
@@ -127,31 +125,9 @@ curl -X POST https://your-deployment.convex.site/inbound-email \
 3. **Input Sanitization**: All extracted text is sanitized before storage
 4. **Email Verification**: User emails should be verified before processing
 
-## Troubleshooting
-
-### No listings being created
-
-1. Check if email is from StreetEasy (sender/subject validation)
-2. Check if URLs are being extracted correctly
-3. Verify user ID can be resolved (plus addressing or linked email)
-
-### Duplicate listings
-
-The system automatically skips listings that already exist for a user (by URL).
-
-### Missing listing details
-
-Details are parsed from email context. If StreetEasy changes their email format, parsing may need updates.
-
 ## Deployment
 
-After setting up your email provider, deploy with:
-
-```bash
-npx convex deploy
+After setting up your email provider, deploy the backend. Your webhook will be available at:
 ```
-
-Your webhook will be available at:
-```
-https://your-deployment.convex.site/inbound-email
+https://your-api-endpoint/inbound-email
 ```

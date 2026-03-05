@@ -69,8 +69,8 @@ The current swipe UI is unusable. Cards are small, cramped, and don't showcase l
 1. Add `imageUrl` to schema (nullable string) ✓ Simple
 2. Add `images` array for galleries (v2)
 3. Implement image caching service:
-   - On email ingestion, download & store images in Convex file storage
-   - Store permanent Convex file URLs
+   - On email ingestion, download & store images in file storage
+   - Store permanent file URLs
    - Fallback: scrape StreetEasy listing page for images
 
 **Schema Change:**
@@ -79,7 +79,7 @@ listings: defineTable({
   // ... existing fields
   imageUrl: v.optional(v.string()),      // Primary image URL
   images: v.optional(v.array(v.string())), // Gallery (v2)
-  imageStorageId: v.optional(v.id("_storage")), // Convex file storage
+  imageStorageId: v.optional(v.string()),        // File storage ID
 })
 ```
 
@@ -133,7 +133,7 @@ listings: defineTable({
 
 ### Phase 2: Image Pipeline (P1)
 1. Download & cache images on ingestion
-2. Add Convex file storage
+2. Add file storage
 3. Gallery support (multiple images)
 
 ### Phase 3: Polish (P2)
@@ -165,9 +165,9 @@ listings: defineTable({
 - `src/index.css` - Global styles for full-screen
 
 **Backend:**
-- `convex/schema.ts` - Add imageUrl field
-- `convex/emailIngestion.ts` - Image download/storage
-- (new) `convex/images.ts` - Image storage utilities
+- Schema update - Add imageUrl field
+- Email ingestion - Image download/storage
+- Image storage utilities
 
 ---
 
