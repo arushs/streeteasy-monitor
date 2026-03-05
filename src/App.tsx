@@ -1,7 +1,6 @@
 import { useState } from "react";
 
-// TODO: Replace Convex auth with D1/Workers-based auth
-// Previously used: @convex-dev/auth, convex/react (useQuery, useMutation, Authenticated, Unauthenticated)
+// TODO: Implement auth via D1/Workers API
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
@@ -14,7 +13,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
     setIsLoading(true);
     try {
       // TODO: Implement auth via D1/Workers API
-      console.warn("Auth not yet implemented — Convex removed");
+      console.warn("Auth not yet implemented — TODO: D1/Workers auth");
       onLogin();
     } catch (error) {
       console.error("Auth error:", error);
@@ -27,7 +26,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
     setIsLoading(true);
     try {
       // TODO: Implement Google OAuth via Workers
-      console.warn("Google sign-in not yet implemented — Convex removed");
+      console.warn("Google sign-in not yet implemented — TODO: Workers OAuth");
       onLogin();
     } catch (error) {
       console.error("Google sign in error:", error);
@@ -174,7 +173,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
 export default function App() {
   // TODO: Replace with real auth state from D1/Workers
-  // Previously used Convex's <Authenticated>/<Unauthenticated> components
+  // TODO: Replace with real auth state from D1/Workers session
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return (

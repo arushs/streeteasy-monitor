@@ -1,16 +1,15 @@
-# StreetEasy Monitor - Convex Backend
+# StreetEasy Monitor
 
-Backend functions for the StreetEasy Monitor app.
+Backend functions for the StreetEasy Monitor app, powered by Cloudflare Workers and D1.
 
 ## Deployment
 
-- **Project**: quixotic-ram-346
-- **URL**: https://quixotic-ram-346.convex.cloud
+See `DEPLOY.md` for deployment instructions (Cloudflare Workers + D1).
 
 ## Security Features
 
 ### Authentication
-All queries and mutations require authentication via `ctx.auth.getUserIdentity()`. Unauthenticated requests receive a clear error message.
+All queries and mutations require authentication via session tokens. Unauthenticated requests receive a clear error message.
 
 ### User Scoping
 - All listings have a `userId` field
@@ -28,71 +27,69 @@ All queries and mutations require authentication via `ctx.auth.getUserIdentity()
 
 ### Queries
 
-#### `listings:list`
+#### `GET /api/listings`
 Get all listings for the authenticated user.
-- Args: `{ status?: string }` - Optional filter by status
+- Query params: `status` (optional) - Filter by status
 - Returns: Array of listings
 
-#### `listings:get`
+#### `GET /api/listings/:id`
 Get a single listing by ID.
-- Args: `{ id: Id<"listings"> }`
 - Returns: Listing object
 
-#### `listings:stats`
+#### `GET /api/listings/stats`
 Get listing statistics for the authenticated user.
-- Args: none
 - Returns: `{ total, byStatus, bySource }`
 
 ### Mutations
 
-#### `listings:create`
+#### `POST /api/listings`
 Create a new listing.
-- Args: `{ streetEasyUrl, price, source?, status?, address?, bedrooms?, neighborhood?, noFee?, emailMessageId? }`
+- Body: `{ streetEasyUrl, price, source?, status?, address?, bedrooms?, neighborhood?, noFee?, emailMessageId? }`
 - Returns: New listing ID
 
-#### `listings:updateStatus`
+#### `PATCH /api/listings/:id/status`
 Update listing status.
-- Args: `{ id, status }`
+- Body: `{ status }`
 - Returns: `{ success: true }`
 
-#### `listings:update`
+#### `PATCH /api/listings/:id`
 Update listing details.
-- Args: `{ id, streetEasyUrl?, price?, status?, address?, bedrooms?, neighborhood?, noFee? }`
+- Body: `{ streetEasyUrl?, price?, status?, address?, bedrooms?, neighborhood?, noFee? }`
 - Returns: `{ success: true }`
 
-#### `listings:remove`
+#### `DELETE /api/listings/:id`
 Delete a listing.
-- Args: `{ id }`
 - Returns: `{ success: true, deletedId }`
 
 ### Admin Functions
 
-#### `admin:auditData`
+#### `GET /api/admin/audit`
 Audit existing data for issues (XSS, invalid URLs, orphaned listings).
 - Requires authentication
 - Returns audit report
 
-#### `admin:sanitizeExistingData` (internal)
-Remove problematic data. Run from Convex dashboard.
+#### `POST /api/admin/sanitize` (internal)
+Remove problematic data. Run from admin dashboard.
 
-## Schema
+## Schema (D1)
 
-```typescript
-listings: {
-  streetEasyUrl: string,
-  price: number,
-  source: string,
-  status: string,
-  foundAt: number,
-  address?: string,
-  bedrooms?: number,
-  neighborhood?: string,
-  noFee?: boolean,
-  emailMessageId?: string,
-  userId?: string, // Optional for backward compatibility
-}
+```sql
+CREATE TABLE listings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  streetEasyUrl TEXT NOT NULL,
+  price REAL NOT NULL,
+  source TEXT NOT NULL DEFAULT 'manual',
+  status TEXT NOT NULL DEFAULT 'new',
+  foundAt INTEGER NOT NULL,
+  address TEXT,
+  bedrooms INTEGER,
+  neighborhood TEXT,
+  noFee INTEGER DEFAULT 0,
+  emailMessageId TEXT,
+  userId TEXT
+);
 ```
 
 ## Backward Compatibility
 
-Existing listings without `userId` are preserved but "orphaned" - they won't appear in user queries. New listings always have `userId` set.
+Existing listings without `userId` are preserved but "orphaned" — they won't appear in user queries. New listings always have `userId` set.
