@@ -1,11 +1,8 @@
 import { useMemo, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
 
 interface Listing {
-  _id: Id<"listings">;
+  _id: string;
   streetEasyUrl: string;
   price: number;
   status: string;
@@ -18,8 +15,9 @@ interface Listing {
 }
 
 export function SavesPage() {
-  const listings = useQuery(api.admin.getAllListings);
-  const updateStatus = useMutation(api.listings.updateStatus);
+  // TODO: Replace with D1/Workers API calls
+  const listings: Listing[] = [];
+  const updateStatus = async (_args: { id: string; status: string }) => {};
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   // Filter to only show "interested" (saved) listings
@@ -30,7 +28,7 @@ export function SavesPage() {
       .sort((a, b) => b.foundAt - a.foundAt);
   }, [listings]);
 
-  const handleRemove = async (id: Id<"listings">) => {
+  const handleRemove = async (id: string) => {
     setRemovingId(id);
     try {
       await updateStatus({ id, status: "rejected" });

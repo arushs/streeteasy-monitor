@@ -1,7 +1,5 @@
-import { Id } from "../../convex/_generated/dataModel";
-
 export interface Listing {
-  _id: Id<"listings">;
+  _id: string;
   streetEasyUrl: string;
   price: number;
   status: string;

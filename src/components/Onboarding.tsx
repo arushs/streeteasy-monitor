@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import "./Onboarding.css";
 
 export default function Onboarding() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const addEmail = useMutation(api.userEmails.add);
+
+  // TODO: Replace with D1/Workers API call
+  const addEmail = async (_email: string) => {};
 
   const handleAddEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +15,7 @@ export default function Onboarding() {
 
     setIsSubmitting(true);
     try {
-      await addEmail({ email: email.trim() });
+      await addEmail(email.trim());
       setEmail("");
       setShowSuccess(true);
     } catch (error) {
@@ -26,7 +26,6 @@ export default function Onboarding() {
   };
 
   const handleSetupComplete = () => {
-    // This will refresh the parent component to show the Kanban board
     window.location.reload();
   };
 

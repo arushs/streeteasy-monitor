@@ -1,5 +1,3 @@
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import "./KanbanBoard.css";
 
 const COLUMNS = [
@@ -22,25 +20,21 @@ interface Listing {
 }
 
 export default function KanbanBoard() {
-  const listings = useQuery(api.listings.list);
-  const updateStatus = useMutation(api.listings.updateStatus);
+  // TODO: Replace with D1/Workers API calls
+  const listings: Listing[] = [];
+  const updateStatus = async (_args: { id: string; status: string }) => {};
 
   const handleStatusUpdate = async (listingId: string, newStatus: string) => {
     try {
-      await updateStatus({ id: listingId as any, status: newStatus });
+      await updateStatus({ id: listingId, status: newStatus });
     } catch (error) {
       console.error("Failed to update listing status:", error);
     }
   };
 
   const getListingsForColumn = (columnId: string) => {
-    if (!listings) return [];
     return listings.filter((listing: Listing) => listing.status === columnId);
   };
-
-  if (listings === undefined) {
-    return <div className="kanban-loading">Loading listings...</div>;
-  }
 
   return (
     <div className="kanban-board">

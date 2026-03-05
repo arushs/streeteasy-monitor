@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../../convex/_generated/api";
 import { CardStack } from "../components/CardStack";
 import type { Listing, SwipeDirection } from "../types/listing";
 
@@ -37,8 +35,9 @@ function FilterChip({ label, active = false, onClick }: { label: string; active?
 }
 
 export function SwipeFeed() {
-  const listings = useQuery(api.admin.getAllListings);
-  const updateStatus = useMutation(api.listings.updateStatus);
+  // TODO: Replace with D1/Workers API calls
+  const listings: Listing[] = [];
+  const updateStatus = async (_args: { id: string; status: string }) => {};
   
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);

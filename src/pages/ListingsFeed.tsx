@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../../convex/_generated/api";
 import { ListingCard } from "../components/ListingCard";
 import { StatusBadge } from "../components/StatusBadge";
 import type { Listing } from "../types/listing";
@@ -27,8 +25,9 @@ const STATUS_TABS: { value: StatusFilter; label: string; emoji: string }[] = [
 ];
 
 export function ListingsFeed() {
-  const listings = useQuery(api.admin.getAllListings);
-  const updateStatus = useMutation(api.listings.updateStatus);
+  // TODO: Replace with D1/Workers API calls
+  const listings: Listing[] = [];
+  const updateStatus = async (_args: { id: string; status: string }) => {};
   
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
