@@ -1,3 +1,5 @@
 node_modules/
 .env.local
+.env
 dist/
+worker/.wrangler/
