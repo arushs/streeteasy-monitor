@@ -246,6 +246,80 @@ export default {
         }
       }
 
+      // ── Listing Changes ─────────────────────────────────────────
+      if (path === "/changes" && method === "GET") {
+        let sql = "SELECT * FROM listing_changes WHERE 1=1";
+        const binds: unknown[] = [];
+        const p = (k: string) => url.searchParams.get(k);
+        if (p("listing_id")) { sql += " AND listing_id = ?"; binds.push(p("listing_id")); }
+        if (p("change_type")) { sql += " AND change_type = ?"; binds.push(p("change_type")); }
+        if (p("since")) { sql += " AND detected_at >= ?"; binds.push(Number(p("since"))); }
+        if (p("unread")) { sql += " AND read_at IS NULL"; }
+        sql += " ORDER BY detected_at DESC";
+        if (p("limit")) { sql += " LIMIT ?"; binds.push(Number(p("limit"))); }
+        else { sql += " LIMIT 100"; }
+        const r = await env.DB.prepare(sql).bind(...binds).all();
+        return json(r.results);
+      }
+
+      if (path === "/changes" && method === "POST") {
+        const body: any = await request.json();
+        const cid = id();
+        const t = now();
+        await env.DB.prepare(
+          "INSERT INTO listing_changes (id, listing_id, change_type, old_value, new_value, detected_at, read_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).bind(cid, body.listing_id, body.change_type, body.old_value ?? null, body.new_value ?? null, body.detected_at || t, null).run();
+        return json({ id: cid });
+      }
+
+      if (path === "/changes/mark-read" && method === "POST") {
+        const body: any = await request.json();
+        if (body.ids && Array.isArray(body.ids)) {
+          const placeholders = body.ids.map(() => '?').join(',');
+          await env.DB.prepare(`UPDATE listing_changes SET read_at = ? WHERE id IN (${placeholders})`).bind(now(), ...body.ids).run();
+        } else {
+          await env.DB.prepare("UPDATE listing_changes SET read_at = ? WHERE read_at IS NULL").bind(now()).run();
+        }
+        return json({ ok: true });
+      }
+
+      if (path === "/changes/summary" && method === "GET") {
+        const since = url.searchParams.get("since") || String(now() - 86400);
+        const r = await env.DB.prepare(
+          "SELECT change_type, COUNT(*) as count FROM listing_changes WHERE detected_at >= ? GROUP BY change_type"
+        ).bind(Number(since)).all();
+        const unread = await env.DB.prepare("SELECT COUNT(*) as count FROM listing_changes WHERE read_at IS NULL").first();
+        return json({ changes: r.results, unread: (unread as any)?.count || 0 });
+      }
+
+      // ── DB Setup (one-time migration helper) ───────────────────
+      if (path === "/setup" && method === "POST") {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS listing_changes (
+            id TEXT PRIMARY KEY,
+            listing_id TEXT NOT NULL,
+            change_type TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            detected_at INTEGER NOT NULL,
+            read_at INTEGER
+          )
+        `).run();
+        await env.DB.prepare(`
+          CREATE INDEX IF NOT EXISTS idx_changes_listing ON listing_changes(listing_id)
+        `).run();
+        await env.DB.prepare(`
+          CREATE INDEX IF NOT EXISTS idx_changes_type ON listing_changes(change_type)
+        `).run();
+        await env.DB.prepare(`
+          CREATE INDEX IF NOT EXISTS idx_changes_unread ON listing_changes(read_at) WHERE read_at IS NULL
+        `).run();
+        // Add last_checked_at and last_price to listings if not exists
+        try { await env.DB.prepare("ALTER TABLE listings ADD COLUMN last_checked_at INTEGER").run(); } catch {}
+        try { await env.DB.prepare("ALTER TABLE listings ADD COLUMN previous_price INTEGER").run(); } catch {}
+        return json({ ok: true, message: "listing_changes table and indexes created" });
+      }
+
       // ── Health ─────────────────────────────────────────────────
       if (path === "/" || path === "/health") {
         return json({ status: "ok", service: "streeteasy-monitor" });
