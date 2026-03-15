@@ -437,6 +437,54 @@ export default {
         return json({ status: "ok", service: "streeteasy-monitor" });
       }
 
+      if (path === "/health/deep" && method === "GET") {
+        const checks: { name: string; status: string; responseMs: number; details?: Record<string, unknown>; error?: string }[] = [];
+
+        // DB connectivity
+        const dbStart = performance.now();
+        try {
+          await env.DB.prepare("SELECT 1").first();
+          checks.push({ name: "database", status: "ok", responseMs: Math.round(performance.now() - dbStart) });
+        } catch (e: any) {
+          checks.push({ name: "database", status: "down", responseMs: Math.round(performance.now() - dbStart), error: e.message });
+        }
+
+        // Listings stats
+        const lStart = performance.now();
+        try {
+          const total = await env.DB.prepare("SELECT COUNT(*) as c FROM listings").first() as any;
+          const active = await env.DB.prepare("SELECT COUNT(*) as c FROM listings WHERE status NOT IN ('rented','delisted','removed')").first() as any;
+          const newest = await env.DB.prepare("SELECT MAX(found_at) as ts FROM listings").first() as any;
+          const newestAge = newest?.ts ? Math.floor((now() - newest.ts) / 86400) : null;
+          checks.push({
+            name: "listings", status: newestAge !== null && newestAge > 30 ? "degraded" : "ok",
+            responseMs: Math.round(performance.now() - lStart),
+            details: { total: total?.c || 0, active: active?.c || 0, newestAgeDays: newestAge },
+          });
+        } catch (e: any) {
+          checks.push({ name: "listings", status: "down", responseMs: Math.round(performance.now() - lStart), error: e.message });
+        }
+
+        // Changes stats
+        const cStart = performance.now();
+        try {
+          const unread = await env.DB.prepare("SELECT COUNT(*) as c FROM listing_changes WHERE read_at IS NULL").first() as any;
+          const recent = await env.DB.prepare("SELECT COUNT(*) as c FROM listing_changes WHERE detected_at > ?").bind(now() - 7 * 86400).first() as any;
+          checks.push({
+            name: "changes", status: "ok", responseMs: Math.round(performance.now() - cStart),
+            details: { unread: unread?.c || 0, lastWeek: recent?.c || 0 },
+          });
+        } catch (e: any) {
+          checks.push({ name: "changes", status: "down", responseMs: Math.round(performance.now() - cStart), error: e.message });
+        }
+
+        const hasDown = checks.some(c => c.status === "down");
+        const hasDegraded = checks.some(c => c.status === "degraded");
+        const overall = hasDown ? "down" : hasDegraded ? "degraded" : "ok";
+
+        return json({ status: overall, service: "streeteasy-monitor", timestamp: new Date().toISOString(), checks }, hasDown ? 503 : 200);
+      }
+
       return json({ error: "not found" }, 404);
     } catch (e: any) {
       return json({ error: e.message }, 500);
