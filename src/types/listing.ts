@@ -1,7 +1,11 @@
+import type { Id } from "../../convex/_generated/dataModel";
+
 export interface Listing {
-  _id: string;
+  _id: Id<"listings">;
+  _creationTime: number;
   streetEasyUrl: string;
   price: number;
+  source: "manual" | "email" | "test";
   status: string;
   address?: string;
   bedrooms?: number;
@@ -11,6 +15,11 @@ export interface Listing {
   noFee?: boolean;
   foundAt: number;
   imageUrl?: string;
+  images?: string[];
+  emailMessageId?: string;
+  userId?: string;
+  previousPrice?: number;
+  lastCheckedAt?: number;
 }
 
 export type SwipeDirection = "left" | "right" | "up";

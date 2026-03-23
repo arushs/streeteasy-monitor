@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { motion } from "framer-motion";
 
 interface PreferenceSection {
@@ -9,6 +11,8 @@ interface PreferenceSection {
 }
 
 export function ProfilePage() {
+  const stats = useQuery(api.listings.stats, {});
+
   const [preferences] = useState<PreferenceSection[]>([
     { id: "budget", icon: "💰", title: "Budget", value: "Up to $4,000/mo" },
     { id: "bedrooms", icon: "🛏️", title: "Bedrooms", value: "1-2 BR" },
@@ -48,16 +52,20 @@ export function ProfilePage() {
           
           <div className="flex gap-6 pt-4 border-t border-gray-100">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">47</p>
-              <p className="text-xs text-gray-500">Swiped</p>
+              <p className="text-2xl font-bold text-gray-900">{stats?.total ?? "–"}</p>
+              <p className="text-xs text-gray-500">Total</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-rose-500">12</p>
+              <p className="text-2xl font-bold text-rose-500">{stats?.byStatus?.interested ?? 0}</p>
               <p className="text-xs text-gray-500">Saved</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-500">3</p>
+              <p className="text-2xl font-bold text-emerald-500">{stats?.byStatus?.reached_out ?? 0}</p>
               <p className="text-xs text-gray-500">Contacted</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-amber-500">{stats?.byStatus?.new ?? 0}</p>
+              <p className="text-xs text-gray-500">New</p>
             </div>
           </div>
         </motion.div>

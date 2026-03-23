@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardStack } from "../components/CardStack";
 import type { Listing, SwipeDirection } from "../types/listing";
@@ -35,9 +37,8 @@ function FilterChip({ label, active = false, onClick }: { label: string; active?
 }
 
 export function SwipeFeed() {
-  // TODO: Replace with D1/Workers API calls
-  const listings: Listing[] = [];
-  const updateStatus = async (_args: { id: string; status: string }) => {};
+  const listings = useQuery(api.listings.list, {}) as Listing[] | undefined;
+  const updateStatusMutation = useMutation(api.listings.updateStatus);
   
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
@@ -91,9 +92,9 @@ export function SwipeFeed() {
       }
       
       // Update status in database
-      await updateStatus({ id: listing._id, status: newStatus });
+      await updateStatusMutation({ id: listing._id, status: newStatus as any });
     },
-    [updateStatus]
+    [updateStatusMutation]
   );
 
   const handleViewDetails = useCallback((listing: Listing) => {

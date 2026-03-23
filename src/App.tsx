@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
 import SwipeFeed from "./pages/SwipeFeed";
 import SavesPage from "./pages/SavesPage";
 import ProfilePage from "./pages/ProfilePage";
 import BottomNav, { TabType } from "./components/BottomNav";
-
-// TODO: Replace with D1/Workers API calls
-const listings: any[] = [];
+import type { Listing } from "./types/listing";
 
 export default function App() {
   // Tab state - persist in localStorage
@@ -19,10 +19,9 @@ export default function App() {
     localStorage.setItem("se-active-tab", tab);
   };
 
-  // Count saved listings for badge
-  const savesCount = useMemo(() => {
-    return listings.filter((l) => l.status === "interested").length;
-  }, []);
+  // Real-time listing count for badge (only saved/interested)
+  const savedListings = useQuery(api.listings.list, { status: "interested" }) as Listing[] | undefined;
+  const savesCount = useMemo(() => savedListings?.length ?? 0, [savedListings]);
 
   // Render active page
   const renderPage = () => {
