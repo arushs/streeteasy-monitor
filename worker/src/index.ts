@@ -74,6 +74,118 @@ function sanitizeQueryInt(val: string | null): number | null {
   return Math.floor(n);
 }
 
+// ── Email Parsing Helpers ──────────────────────────────────────────
+
+interface ParsedListing {
+  street_easy_url: string;
+  price?: number;
+  address?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
+  neighborhood?: string;
+  no_fee?: boolean;
+  image_url?: string;
+}
+
+function parseEmailListings(content: string): ParsedListing[] {
+  const listings: ParsedListing[] = [];
+  const seen = new Set<string>();
+
+  // Match StreetEasy listing URLs
+  const urlRegex = /https?:\/\/streeteasy\.com\/(building|rental|sale)\/[^\s"'<>]+/gi;
+  const urls = content.match(urlRegex) || [];
+
+  for (let url of urls) {
+    // Clean URL: strip tracking params and trailing punctuation
+    url = url.split("?")[0].replace(/[.,;)}\]]+$/, "");
+    if (seen.has(url)) continue;
+    seen.add(url);
+
+    const listing: ParsedListing = { street_easy_url: url };
+
+    // Extract details from surrounding HTML context
+    const urlIdx = content.indexOf(url);
+    if (urlIdx !== -1) {
+      const context = content.substring(
+        Math.max(0, urlIdx - 1500),
+        urlIdx + 500
+      );
+      Object.assign(listing, extractDetailsFromContext(context));
+    }
+
+    listings.push(listing);
+  }
+
+  return listings;
+}
+
+function extractDetailsFromContext(context: string): Partial<ParsedListing> {
+  const details: Partial<ParsedListing> = {};
+
+  // Price: $1,234 or $1,234,567
+  const priceMatch = context.match(/\$\s*([\d,]+(?:\.\d{2})?)/);
+  if (priceMatch) {
+    details.price = parseInt(priceMatch[1].replace(/,/g, ""), 10);
+  }
+
+  // Address: NYC format "123 Main Street" or "123 E 45th St"
+  const addrMatch = context.match(
+    /(\d+\s+(?:[NSEW]\.?\s+)?\d*\s*(?:st|nd|rd|th)?\s*(?:street|st|ave|avenue|blvd|boulevard|place|pl|drive|dr|road|rd|way|court|ct|terrace|ter|lane|ln)[^<,]*)/i
+  );
+  if (addrMatch) {
+    details.address = addrMatch[1].trim().replace(/\s+/g, " ").slice(0, 200);
+  }
+
+  // Bedrooms: "2 bed" or "2 BR" or "2bd" or "Studio"
+  const bedMatch = context.match(/(\d+)\s*(?:bed(?:room)?s?|br|bd)/i);
+  if (bedMatch) {
+    details.bedrooms = parseInt(bedMatch[1], 10);
+  } else if (/studio/i.test(context)) {
+    details.bedrooms = 0;
+  }
+
+  // Bathrooms: "1 bath" or "1 BA" or "1.5ba"
+  const bathMatch = context.match(/([\d.]+)\s*(?:bath(?:room)?s?|ba)/i);
+  if (bathMatch) {
+    details.bathrooms = parseFloat(bathMatch[1]);
+  }
+
+  // Sqft: "750 sq ft" or "750 sqft" or "750 ft²"
+  const sqftMatch = context.match(/([\d,]+)\s*(?:sq\.?\s*ft|sqft|ft²|sf)/i);
+  if (sqftMatch) {
+    details.sqft = parseInt(sqftMatch[1].replace(/,/g, ""), 10);
+  }
+
+  // Neighborhood
+  const neighborhoodPatterns = [
+    /(?:in|at|neighborhood:?\s*)\s*([\w\s]+?)(?:\s*[,|<])/i,
+    /(?:williamsburg|bushwick|bed-?stuy|bedford.stuyvesant|greenpoint|east village|west village|upper east side|upper west side|lower east side|les|soho|tribeca|chelsea|midtown|harlem|astoria|long island city|lic|prospect heights|park slope|crown heights|fort greene|dumbo|brooklyn heights|cobble hill|boerum hill|clinton hill|prospect lefferts|flatbush)/i,
+  ];
+  for (const pat of neighborhoodPatterns) {
+    const m = context.match(pat);
+    if (m) {
+      details.neighborhood = (m[1] || m[0]).trim().slice(0, 100);
+      break;
+    }
+  }
+
+  // No-fee
+  if (/no[- ]fee/i.test(context)) {
+    details.no_fee = true;
+  }
+
+  // Image URL
+  const imgMatch = context.match(
+    /(?:src|href)=["'](https?:\/\/[^"']+\.(?:jpg|jpeg|png|webp)[^"']*)/i
+  );
+  if (imgMatch) {
+    details.image_url = imgMatch[1];
+  }
+
+  return details;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -402,6 +514,88 @@ export default {
           "SELECT COUNT(*) as count FROM listing_changes WHERE read_at IS NULL"
         ).first();
         return json({ changes: r.results, unread: (unread as any)?.count || 0 });
+      }
+
+      // ── Inbound Email (StreetEasy alert parsing) ───────────────
+      if (path === "/inbound-email" && method === "POST") {
+        const contentType = request.headers.get("content-type") || "";
+        let emailHtml = "";
+        let emailText = "";
+        let emailFrom = "";
+        let emailTo = "";
+        let emailSubject = "";
+
+        if (contentType.includes("application/json")) {
+          const body: any = await request.json();
+          emailHtml = body.html || "";
+          emailText = body.text || "";
+          emailFrom = body.from || "";
+          emailTo = body.to || "";
+          emailSubject = body.subject || "";
+        } else if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
+          const formData = await request.formData();
+          emailHtml = (formData.get("html") as string) || "";
+          emailText = (formData.get("text") as string) || "";
+          emailFrom = (formData.get("from") as string) || "";
+          emailTo = (formData.get("to") as string) || "";
+          emailSubject = (formData.get("subject") as string) || "";
+        } else {
+          return json({ error: "unsupported content type, use application/json or multipart/form-data" }, 400);
+        }
+
+        const content = emailHtml || emailText;
+        if (!content) {
+          return json({ error: "no email content (html or text) provided" }, 400);
+        }
+
+        // Extract user_id from plus-addressed recipient: {userId}+se@...
+        let userId: string | null = null;
+        const plusMatch = emailTo.match(/^([^+]+)\+se@/i);
+        if (plusMatch) userId = plusMatch[1];
+
+        // Parse listings from email content
+        const listings = parseEmailListings(content);
+        const t = now();
+        let created = 0;
+        let skipped = 0;
+
+        for (const listing of listings) {
+          const lid = id();
+          try {
+            await env.DB.prepare(
+              "INSERT INTO listings (id, street_easy_url, price, source, status, found_at, address, bedrooms, bathrooms, sqft, neighborhood, no_fee, email_message_id, image_url, images, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            ).bind(
+              lid,
+              listing.street_easy_url,
+              listing.price ?? null,
+              "email",
+              "new",
+              t,
+              listing.address ?? null,
+              listing.bedrooms ?? null,
+              listing.bathrooms ?? null,
+              listing.sqft ?? null,
+              listing.neighborhood ?? null,
+              listing.no_fee ? 1 : 0,
+              null,
+              listing.image_url ?? null,
+              null,
+              userId,
+              t,
+              t
+            ).run();
+            created++;
+          } catch (e: any) {
+            // UNIQUE constraint = duplicate, not an error
+            if (e.message?.includes("UNIQUE")) {
+              skipped++;
+            } else {
+              throw e;
+            }
+          }
+        }
+
+        return json({ success: true, created, skipped, total: listings.length });
       }
 
       // ── DB Setup (one-time migration helper) ───────────────────
