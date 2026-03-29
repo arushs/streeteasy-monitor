@@ -5,4 +5,4 @@ compatibility_date = "2024-12-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "streeteasy-monitor"
-database_id = "e6e2dfbd-db89-44bb-8f1e-216328557b2d"
+database_id = "fd2e0d03-1aaf-4afc-b1bd-88de7c687bb8"
